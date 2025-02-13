@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { join } from 'path';
+import { CarnetModule } from './carnet/carnet.module';
 @Module({
   imports: [
     MailerModule.forRoot({
@@ -33,6 +34,7 @@ import { join } from 'path';
     MongooseModule.forRoot('mongodb://localhost/nestjs_app'),
     UsersModule,
     AuthModule,
+    CarnetModule,
   ],  controllers: [AppController],
   providers: [AppService],
   
