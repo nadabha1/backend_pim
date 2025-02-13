@@ -15,7 +15,7 @@ export class AuthController {
     return this.authService.login(user);
   }
   @Post('forgot-password')
-  async forgotPassword(@Body('email') email: string): Promise<string> {
+  async forgotPassword(@Body('email') email: string): Promise<{ message: string }> {
     return this.usersService.forgotPassword(email);
   }
   @Post('reset-password-with-otp')
@@ -23,8 +23,23 @@ export class AuthController {
     @Body('email') email: string,
     @Body('otp') otp: string,
     @Body('password') newPassword: string,
-  ): Promise<string> {
+  ): Promise<{ message: string }> {
     return this.usersService.resetPasswordWithOtp(email, otp, newPassword);
   }
+
+  @Post('verify-otp')
+async verifyOtp(
+  @Body('email') email: string,
+  @Body('otp') otp: string,
+): Promise<{ message: string }> {
+  const isValid = await this.usersService.validateOtp(email, otp);
+  if (!isValid) {
+    throw new UnauthorizedException('Invalid or expired OTP');
+  }
+  return { message: 'OTP verified successfully' };
+}
+
+
+
 
 }

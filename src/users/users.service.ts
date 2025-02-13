@@ -8,6 +8,7 @@ import * as crypto from 'crypto';
 
 @Injectable()
 export class UsersService {
+ 
   constructor(@InjectModel(User.name) private userModel: Model<User>
 ,    private readonly mailerService: MailerService,
 ) {}
@@ -35,7 +36,7 @@ export class UsersService {
 
  
 
-  async forgotPassword(email: string): Promise<string> {
+  async forgotPassword(email: string): Promise<{ message: string }> {
     const user = await this.userModel.findOne({ email });
     if (!user) {
       throw new Error('User not found');
@@ -58,10 +59,10 @@ export class UsersService {
       },
     });
 
-    return 'Password reset OTP sent to your email';
+    return { message: 'Password reset OTP sent to your email' };
   }
 
-  async resetPasswordWithOtp(email: string, otp: string, newPassword: string): Promise<string> {
+  async resetPasswordWithOtp(email: string, otp: string, newPassword: string):Promise<{ message: string }>{
     const user = await this.userModel.findOne({
       email,
       resetPasswordOtp: otp,
@@ -76,8 +77,28 @@ export class UsersService {
     user.resetPasswordOtp = null;
     user.resetPasswordOtpExpires = null;
     await user.save();
+    return { message: 'Password reset successful' };
 
-    return 'Password reset successful';
   }
+
+  async validateOtp(email: string, otp: string): Promise<boolean> {
+    // Find the user by email
+    const user = await this.userModel.findOne({ email });
+  
+    if (!user) {
+      throw new Error('User not found');
+    }
+  
+    // Check if the OTP matches and is not expired
+    if (
+      user.resetPasswordOtp === otp &&
+      user.resetPasswordOtpExpires > new Date()
+    ) {
+      return true;
+    }
+  
+    return false;
+  }
+  
   
 }

@@ -1,6 +1,9 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
+export type UserDocument = User & Document;
+
+
 @Schema()
 export class User extends Document {
     @Prop({ required: true })
@@ -19,6 +22,10 @@ export class User extends Document {
   
     @Prop({ default: null })
     resetPasswordOtpExpires: Date | null;
+    @Prop({ default: 50 }) // Default: 50 coins on sign-up
+    coins: number;
+    @Prop({ default: null }) // Chaque utilisateur a UN SEUL carnet
+    carnetId: string | null;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
