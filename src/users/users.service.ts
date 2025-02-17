@@ -1,15 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { MailerService } from '@nestjs-modules/mailer';
 import * as crypto from 'crypto';
+import { Carnet } from 'src/carnet/entities/carnet.entity';
+import { CarnetService } from 'src/carnet/carnet.service';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<User>
-,    private readonly mailerService: MailerService,
+ 
+  constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
+    private readonly carnetService: CarnetService,  
+    private readonly mailerService: MailerService,
 ) {}
   async create(user: Partial<User>): Promise<User> {
     const hashedPassword = await bcrypt.hash(user.password, 10);
@@ -35,7 +40,7 @@ export class UsersService {
 
  
 
-  async forgotPassword(email: string): Promise<string> {
+  async forgotPassword(email: string): Promise<{ message: string }> {
     const user = await this.userModel.findOne({ email });
     if (!user) {
       throw new Error('User not found');
@@ -58,10 +63,10 @@ export class UsersService {
       },
     });
 
-    return 'Password reset OTP sent to your email';
+    return { message: 'Password reset OTP sent to your email' };
   }
 
-  async resetPasswordWithOtp(email: string, otp: string, newPassword: string): Promise<string> {
+  async resetPasswordWithOtp(email: string, otp: string, newPassword: string):Promise<{ message: string }>{
     const user = await this.userModel.findOne({
       email,
       resetPasswordOtp: otp,
@@ -76,8 +81,113 @@ export class UsersService {
     user.resetPasswordOtp = null;
     user.resetPasswordOtpExpires = null;
     await user.save();
+    return { message: 'Password reset successful' };
 
-    return 'Password reset successful';
+  }
+
+  async validateOtp(email: string, otp: string): Promise<boolean> {
+    // Find the user by email
+    const user = await this.userModel.findOne({ email });
+  
+    if (!user) {
+      throw new Error('User not found');
+    }
+  
+    // Check if the OTP matches and is not expired
+    if (
+      user.resetPasswordOtp === otp &&
+      user.resetPasswordOtpExpires > new Date()
+    ) {
+      return true;
+    }
+  
+    return false;
+  }
+  
+ /* async unlockPlace(userId: string, placeId: string) {
+    const user = await this.userModel.findById(userId);
+  
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+  
+    // Vérification si l'utilisateur a déjà débloqué ce lieu
+    if (user.unlockedPlaces.includes(placeId)) {
+      throw new BadRequestException('Place already unlocked');
+    }
+  
+    // Vérification si l'utilisateur a suffisamment de coins
+    if (user.coins < 5) {
+      throw new BadRequestException('Not enough coins to unlock this place');
+    }
+ 
+
+
+
+    // Déduction de 5 coins
+    user.coins -= 5;
+    console.log(`Coins after deduction: ${user.coins}`); // Log pour vérifier la déduction
+  
+    // Ajout du lieu débloqué
+    user.unlockedPlaces.push(placeId);
+  
+    // Sauvegarder les modifications de l'utilisateur
+    await user.save();
+  
+    console.log(`User's unlocked places: ${user.unlockedPlaces}`); // Log pour vérifier l'ajout du lieu
+  
+    return { message: 'Place unlocked successfully', coinsRemaining: user.coins };
+  }*/
+ 
+    async unlockPlace(userId: string, placeId: string) {
+      const user = await this.userModel.findById(userId);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+  
+      // Vérifier si l'utilisateur a déjà débloqué cette place
+      if (user.unlockedPlaces.includes(placeId)) {
+        throw new BadRequestException('Place already unlocked');
+      }
+  
+      // Vérifier si l'utilisateur a assez de coins
+      if (user.coins < 5) {
+        throw new BadRequestException('Not enough coins to unlock this place');
+      }
+  
+      // Trouver le propriétaire du carnet auquel appartient cette place
+      const ownerId = await this.carnetService.getOwnerByPlace(placeId);
+      if (!ownerId) {
+        throw new NotFoundException('Carnet not found for this place');
+      }
+  
+      // Déduire 5 coins de l'utilisateur qui débloque
+      user.coins -= 5;
+      user.unlockedPlaces.push(placeId);
+      await user.save();
+  
+      // Ajouter 10 coins au propriétaire du carnet
+      const owner = await this.userModel.findById(ownerId);
+      if (owner) {
+        owner.coins += 10;
+        await owner.save();
+      }
+  
+      return { 
+        message: 'Place unlocked successfully', 
+        coinsRemaining: user.coins, 
+        ownerCoins: owner ? owner.coins : 0 
+      };
+    }
+  
+  async getUnlockedPlaces(userId: string): Promise<string[]> {
+    const user = await this.userModel.findById(userId);
+    
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+  
+    return user.unlockedPlaces;
   }
   
 }

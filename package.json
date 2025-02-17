@@ -30,6 +30,7 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^10.0.0",
     "bcrypt": "^5.1.1",
+    "mongodb": "^6.13.0",
     "mongoose": "^8.9.7",
     "nodemailer": "^6.10.0",
     "passport": "^0.7.0",
