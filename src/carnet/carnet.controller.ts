@@ -57,4 +57,37 @@ async addPlace(
   deleteCarnet(@Param('id') id: string) {
     return this.carnetService.deleteCarnet(id);
   }
+//tessssst
+  @Put('user/:userId/unlock/:carnetId')
+unlockCarnet(@Param('userId') userId: string, @Param('carnetId') carnetId: string) {
+  return this.carnetService.unlockCarnet(userId, carnetId);
+}
+/*@Put('user/:userId/unlock/:carnetId/place/:placeId')
+unlockPlace(
+  @Param('userId') userId: string,
+  @Param('carnetId') carnetId: string,
+  @Param('placeId') placeId: string,
+) {
+  return this.carnetService.unlockPlace(userId, carnetId, placeId);
+}*/
+@Put(':userId/unlock/:placeId')
+async unlockPlace(
+  @Param('userId') userId: string,
+  @Param('placeId') placeId: string
+) {
+  return this.carnetService.unlockPlace(userId, placeId);
+}
+
+@Get('exclude/:userId')
+async getAllCarnetsExceptUser(@Param('userId') userId: string) {
+  console.log(userId)
+  return this.carnetService.getAllCarnetsExceptUser(userId);
+}
+@Get('place/:placeId/owner')
+async getOwnerByPlace(@Param('placeId') placeId: string) {
+  return this.carnetService.getOwnerByPlace(placeId);
+}
+
+
+
 }

@@ -1,6 +1,7 @@
 import { Controller, Post, Body, UnauthorizedException, Param } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UsersService } from 'src/users/users.service';
+import axios from 'axios';
 
 @Controller('auth')
 export class AuthController {
@@ -38,7 +39,36 @@ async verifyOtp(
   }
   return { message: 'OTP verified successfully' };
 }
+  @Post('facebook')
+  async facebookLogin(@Body('access_token') accessToken: string) {
+    try {
+      // 🔥 Validate Access Token with Facebook API
+      const { data } = await axios.get(
+        `https://graph.facebook.com/me?fields=id,name,email,picture&access_token=${accessToken}`,
+      );
 
+      if (!data.id) {
+        throw new UnauthorizedException('Invalid Facebook Token');
+      }
+
+      // ✅ Here you can create/find the user in the database
+      const user = {
+        facebookId: data.id,
+        name: data.name,
+        email: data.email,
+        picture: data.picture?.data?.url,
+      };
+
+      // ✅ Return User Data (In real case, generate JWT Token)
+      return {
+        message: 'Facebook Login Successful',
+        user,
+      };
+    } catch (error) {
+      throw new UnauthorizedException('Error validating Facebook Token');
+    }
+  
+}
 
 
 

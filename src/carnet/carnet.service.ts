@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Carnet, CarnetDocument } from './entities/carnet.entity';
 import { User, UserDocument } from 'src/users/entities/user.entity';
 
@@ -120,5 +120,87 @@ async getCarnetByUserId(userId: string): Promise<Carnet | null> {
 
   async deleteCarnet(id: string): Promise<Carnet> {
     return this.carnetModel.findByIdAndDelete(id).exec();
+
+  
   }
+//tesssttt
+  async unlockCarnet(userId: string, carnetId: string): Promise<{ message: string; coins: number }> {
+    const user = await this.userModel.findById(userId);
+    const carnet = await this.carnetModel.findById(carnetId);
+  
+    if (!user || !carnet) {
+      throw new NotFoundException('Utilisateur ou carnet introuvable');
+    }
+  
+    if (user.unlockedCarnets.includes(carnetId)) {
+      throw new BadRequestException('Carnet déjà débloqué');
+    }
+  
+    if (user.coins < 5) {
+      throw new BadRequestException('Fonds insuffisants pour débloquer ce carnet');
+    }
+  
+    // Déduire 5 coins et débloquer le carnet
+    user.coins -= 5;
+    user.unlockedCarnets.push(carnetId);
+  
+    await user.save();
+  
+    return { message: 'Carnet débloqué avec succès', coins: user.coins };
+  }
+  /*async unlockPlace(userId: string, carnetId: string, placeId: string): Promise<any> {
+    const user = await this.userModel.findById(userId);
+    const carnet = await this.carnetModel.findById(carnetId);
+  
+    if (!user || !carnet) {
+      throw new NotFoundException('Utilisateur ou carnet introuvable');
+    }
+  
+    // Vérifier si l'utilisateur a déjà débloqué ce lieu
+    if (user.unlockedPlaces.includes(placeId)) {
+      throw new BadRequestException('Lieu déjà débloqué');
+    }
+  
+    // Vérifier si l'utilisateur a assez de coins
+    if (user.coins < 5) {
+      throw new BadRequestException('Pas assez de coins');
+    }
+  
+    // Déduire 5 coins et ajouter le lieu débloqué
+    user.coins -= 5;
+    user.unlockedPlaces.push(placeId);
+  
+    await user.save();
+  
+    return { message: 'Lieu débloqué avec succès', coins: user.coins };
+  }*/
+    async unlockPlace(userId: string, placeId: string) {
+      const user = await this.userModel.findById(userId);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+    
+      if (!user.unlockedPlaces.includes(placeId)) {
+        user.unlockedPlaces.push(placeId);
+        await user.save();
+      }
+    
+      return { message: 'Place unlocked successfully' };
+    }
+    
+    async getAllCarnetsExceptUser(userId: string): Promise<Carnet[]> {
+      // Find all carnets except the one owned by the user
+      return this.carnetModel.find({ owner: { $ne: userId } }).exec();
+    }
+
+async getOwnerByPlace(placeId: string): Promise<string | null> {
+  const placeObjectId = new Types.ObjectId(placeId); // Conversion en ObjectId
+  const carnet = await this.carnetModel.findOne({ "places._id": placeObjectId }).exec();
+  if (carnet) {
+    return carnet.owner.toString();
+  }
+  return null;
+}
+
+  
 }

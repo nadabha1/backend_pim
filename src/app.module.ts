@@ -8,6 +8,8 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { join } from 'path';
 import { CarnetModule } from './carnet/carnet.module';
+import { ConfigModule } from '@nestjs/config';
+
 @Module({
   imports: [
     MailerModule.forRoot({
@@ -31,6 +33,7 @@ import { CarnetModule } from './carnet/carnet.module';
         },
       },
     }),
+    ConfigModule.forRoot({ isGlobal: true }), // ✅ Load .env globally
     MongooseModule.forRoot('mongodb://localhost/nestjs_app'),
     UsersModule,
     AuthModule,
