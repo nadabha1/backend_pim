@@ -17,6 +17,11 @@ export class UsersController {
   async findById(@Param('id') id: string): Promise<User> {
     return this.usersService.findById(id);
   }
+  @Get(':userId/others')
+  async getAllUsers(@Param('userId') userId: string): Promise<User[]> {
+    return this.usersService.getAllUsers(userId);
+  }
+
 
   @Put(':id/update')
   @UseGuards(AuthGuard)

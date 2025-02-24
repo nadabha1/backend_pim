@@ -9,6 +9,7 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
 import { join } from 'path';
 import { CarnetModule } from './carnet/carnet.module';
 import { ConfigModule } from '@nestjs/config';
+import { FollowModule } from './follow/follow.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ConfigModule } from '@nestjs/config';
     UsersModule,
     AuthModule,
     CarnetModule,
+    FollowModule,
   ],  controllers: [AppController],
   providers: [AppService],
   

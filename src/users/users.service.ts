@@ -100,5 +100,7 @@ export class UsersService {
     return false;
   }
   
-  
+  async getAllUsers(currentUserId: string): Promise<User[]> {
+    return this.userModel.find({ _id: { $ne: currentUserId } }).exec();
+  }
 }
