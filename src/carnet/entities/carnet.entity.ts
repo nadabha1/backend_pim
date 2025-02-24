@@ -5,8 +5,7 @@ export type CarnetDocument = Carnet & Document;
 @Schema()
 export class Place {
 
-  @Prop({ type: Types.ObjectId }) // Ajoute ceci pour que MongoDB génère un ID unique
-  _id: Types.ObjectId;
+ 
 
   @Prop({ required: true })
   name: string;

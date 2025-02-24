@@ -189,5 +189,9 @@ export class UsersService {
   
     return user.unlockedPlaces;
   }
+
+  async getAllUsers(): Promise<User[]> {
+    return this.userModel.find().exec(); // Récupère tous les utilisateurs
+  }
   
 }

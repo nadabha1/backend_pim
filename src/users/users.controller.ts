@@ -9,7 +9,7 @@ import { extname } from 'path';
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
-
+ 
   @Post('register')
   @UseInterceptors(
     FileInterceptor('profilePicture', {
@@ -30,7 +30,11 @@ export class UsersController {
     return this.usersService.create(user);
   }
 
-
+  @Get('all')  
+  async getAllUsers(): Promise<User[]> {
+    return this.usersService.getAllUsers();  // Appelle la méthode dans le service
+  }
+  
   @Get(':id')
   @UseGuards(AuthGuard)
   async findById(@Param('id') id: string): Promise<User> {
@@ -80,5 +84,6 @@ export class UsersController {
 async getUnlockedPlaces(@Param('userId') userId: string) {
   return this.usersService.getUnlockedPlaces(userId);
 }
+
 
 }

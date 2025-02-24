@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Carnet, CarnetDocument } from './entities/carnet.entity';
@@ -175,11 +175,19 @@ async getCarnetByUserId(userId: string): Promise<Carnet | null> {
     return { message: 'Lieu débloqué avec succès', coins: user.coins };
   }*/
     async unlockPlace(userId: string, placeId: string) {
+      // Vérifier si l'utilisateur existe
       const user = await this.userModel.findById(userId);
       if (!user) {
         throw new NotFoundException('User not found');
       }
     
+      // Vérifier si le lieu existe avant de l'ajouter
+      const placeExists = await this.carnetModel.findOne({ 'places._id': placeId });
+      if (!placeExists) {
+        throw new NotFoundException('Place not found');
+      }
+    
+      // Vérifier si l'utilisateur a déjà débloqué ce lieu
       if (!user.unlockedPlaces.includes(placeId)) {
         user.unlockedPlaces.push(placeId);
         await user.save();
@@ -187,6 +195,7 @@ async getCarnetByUserId(userId: string): Promise<Carnet | null> {
     
       return { message: 'Place unlocked successfully' };
     }
+    
     
     async getAllCarnetsExceptUser(userId: string): Promise<Carnet[]> {
       // Find all carnets except the one owned by the user
@@ -202,5 +211,22 @@ async getOwnerByPlace(placeId: string): Promise<string | null> {
   return null;
 }
 
-  
+async getAllPlaces(): Promise<any[]> {
+  try {
+    // Fetch all Carnets with their places
+    const carnets = await this.carnetModel.find({}, 'places').exec();
+
+    if (!carnets || carnets.length === 0) {
+      throw new NotFoundException('No carnets found');
+    }
+
+    // Flatten the places from all carnets into a single array
+    const allPlaces = carnets.flatMap(carnet => carnet.places);
+    return allPlaces;
+  } catch (error) {
+    console.error('Error retrieving places:', error); // Log any error
+    throw new InternalServerErrorException('Error retrieving places');
+  }
+}
+
 }
