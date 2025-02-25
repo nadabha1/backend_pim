@@ -8,6 +8,9 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { join } from 'path';
 import { CarnetModule } from './carnet/carnet.module';
+import { FollowModule } from './follow/follow.module';
+import { Preference } from './preferences/entities/preference.entity';
+import { PreferencesModule } from './preferences/preferences.module';
 @Module({
   imports: [
     MailerModule.forRoot({
@@ -35,6 +38,9 @@ import { CarnetModule } from './carnet/carnet.module';
     UsersModule,
     AuthModule,
     CarnetModule,
+    FollowModule,
+    PreferencesModule,
+    
   ],  controllers: [AppController],
   providers: [AppService],
   

@@ -4,12 +4,23 @@ import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { User, UserSchema } from './entities/user.entity';
 import { CarnetModule } from 'src/carnet/carnet.module';
+import { PreferencesModule } from 'src/preferences/preferences.module';
+import { CarnetService } from 'src/carnet/carnet.service';
+import { Preference, PreferenceSchema } from 'src/preferences/entities/preference.entity';
+import { Carnet, CarnetSchema } from 'src/carnet/entities/carnet.entity';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),CarnetModule],
+  imports: [
+    MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
+      { name: Preference.name, schema: PreferenceSchema },
+      { name: Carnet.name, schema: CarnetSchema },
+       // ✅ Add Preference Model
+    ]),
+  ],
   controllers: [UsersController],
-  providers: [UsersService],
-  exports: [UsersService], // Export pour utilisation dans AuthService
+  providers: [UsersService,CarnetService],
+  exports: [UsersService,CarnetService], // Export pour utilisation dans AuthService
 
 })
 export class UsersModule {}

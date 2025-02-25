@@ -5,6 +5,7 @@ import { User } from './entities/user.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { Preference } from 'src/preferences/entities/preference.entity';
 
 @Controller('users')
 export class UsersController {
@@ -23,12 +24,18 @@ export class UsersController {
       }),
     }),
   )
-  async register(@Body() user: Partial<User>, @UploadedFile() file: Express.Multer.File): Promise<User> {
+  /*async register(@Body() user: Partial<User>, @UploadedFile() file: Express.Multer.File): Promise<User> {
     if (file) {
       user.profileImage = `/uploads/${file.filename}`;
     }
     return this.usersService.create(user);
-  }
+  }*/
+    async register(@Body() body: { user: Partial<User>; preferences: Partial<Preference> }): Promise<User> {
+      if (!body.user || !body.user.password) {
+        throw new Error("User data is missing or incomplete");
+      }
+      return this.usersService.create(body.user, body.preferences);
+    }
 
   @Get('all')  
   async getAllUsers(): Promise<User[]> {
@@ -40,7 +47,17 @@ export class UsersController {
   async findById(@Param('id') id: string): Promise<User> {
     return this.usersService.findById(id);
   }
-
+  @Post('checkverification')
+  async checkVerification(@Body('email') email: string) {
+      const user = await this.usersService.findByEmail(email);
+      if (!user) {
+          return { isVerified: false }; // ❌ Prevent undefined errors
+      }
+  
+      console.log('🔍 Checking verification for ${email}: ${user.isVerified}');
+  
+      return { isVerified: user.isVerified }; // ✅ Ensure this returns HTTP 200
+  }
   @Put(':id/update')
   @UseGuards(AuthGuard)
   @UseInterceptors(

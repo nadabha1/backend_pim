@@ -1,5 +1,6 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
+import { Preference } from 'src/preferences/entities/preference.entity';
 
 export type UserDocument = User & Document;
 
@@ -50,6 +51,10 @@ export class User extends Document {
 unlockedCarnets: string[]; // Liste des ID des carnets débloqués  
 @Prop({ type: [String], default: [] }) 
 unlockedPlaces: string[]; 
+@Prop({ type: Types.ObjectId, ref: 'Preference', default: null }) 
+preferences: Preference;
+@Prop({ type: Boolean, default: false })  
+isVerified: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
