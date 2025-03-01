@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Your Email</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #ffffff;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        p {
+            font-size: 16px;
+            color: #666;
+            line-height: 1.5;
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 25px;
+            margin-top: 20px;
+            background-color: #008CBA;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Confirm Your Email</h1>
+        <p>Thank you for registering with us </p>
+        <p>We're excited to have you join us. Click the button below to confirm your email address and start exploring.</p>
+       <!-- ✅ Clickable Button -->
+        <a href="{{verificationLink}}" class="btn">Confirm Email Address</a>
+
+        <!-- ✅ Backup Link if Button Fails -->
+       
+        <p>If you did not sign up for this account, you can ignore this email.</p>
+        <div class="footer">
+            <p>Best Regards,<br>The Team</p>
+        </div>
+    </div>
+</body>
+</html>

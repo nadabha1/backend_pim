@@ -80,7 +80,6 @@ async unlockPlace(
 
 @Get('exclude/:userId')
 async getAllCarnetsExceptUser(@Param('userId') userId: string) {
-  console.log(userId)
   return this.carnetService.getAllCarnetsExceptUser(userId);
 }
 @Get('place/:placeId/owner')
@@ -88,6 +87,9 @@ async getOwnerByPlace(@Param('placeId') placeId: string) {
   return this.carnetService.getOwnerByPlace(placeId);
 }
 
-
+@Get('places')
+  async getAllPlaces() {
+    return this.carnetService.getAllPlaces();
+  }
 
 }

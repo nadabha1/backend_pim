@@ -1,9 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 export type CarnetDocument = Carnet & Document;
 
 @Schema()
 export class Place {
+
+ 
+
   @Prop({ required: true })
   name: string;
 

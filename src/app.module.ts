@@ -8,9 +8,9 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { join } from 'path';
 import { CarnetModule } from './carnet/carnet.module';
-import { ConfigModule } from '@nestjs/config';
 import { FollowModule } from './follow/follow.module';
-
+import { Preference } from './preferences/entities/preference.entity';
+import { PreferencesModule } from './preferences/preferences.module';
 @Module({
   imports: [
     MailerModule.forRoot({
@@ -34,12 +34,13 @@ import { FollowModule } from './follow/follow.module';
         },
       },
     }),
-    ConfigModule.forRoot({ isGlobal: true }), // ✅ Load .env globally
     MongooseModule.forRoot('mongodb://localhost/nestjs_app'),
     UsersModule,
     AuthModule,
     CarnetModule,
     FollowModule,
+    PreferencesModule,
+    
   ],  controllers: [AppController],
   providers: [AppService],
   
