@@ -22,7 +22,11 @@ export class UsersController {
     return this.usersService.getAllUsers(userId);
   }
 
-
+  @Get('all')  
+  async getAllUsers2(): Promise<User[]> {
+    return this.usersService.getAllUsers2();  // Appelle la méthode dans le service
+  }
+  
   @Put(':id/update')
   @UseGuards(AuthGuard)
   async updateProfile(
@@ -38,4 +42,7 @@ export class UsersController {
     await this.usersService.delete(id);
     return 'Account deleted successfully';
   }
+
+
+
 }

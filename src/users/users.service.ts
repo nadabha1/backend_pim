@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
@@ -99,8 +99,10 @@ export class UsersService {
   
     return false;
   }
-  
   async getAllUsers(currentUserId: string): Promise<User[]> {
     return this.userModel.find({ _id: { $ne: currentUserId } }).exec();
+  }
+  async getAllUsers2(): Promise<User[]> {
+    return this.userModel.find().exec(); // Récupère tous les utilisateurs
   }
 }
