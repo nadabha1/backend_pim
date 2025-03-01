@@ -5,11 +5,10 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { UsersModule } from '../users/users.module';
 import { JwtStrategy } from './jwt.strategy';
-import { FacebookStrategy } from './facebook.strategy';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [PassportModule.register({ defaultStrategy: 'facebook' }), ConfigModule,
+  imports: [ConfigModule,
     UsersModule,
     PassportModule,
     JwtModule.register({
@@ -18,7 +17,7 @@ import { ConfigModule } from '@nestjs/config';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy,FacebookStrategy],
+  providers: [AuthService, JwtStrategy],
   
 })
 export class AuthModule {}
