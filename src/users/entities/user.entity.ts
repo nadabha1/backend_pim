@@ -35,11 +35,7 @@ export class User extends Document {
     @Prop({ default: '' }) 
     profileImage: string;
 
-    @Prop({ type: [String], default: [] }) 
-    followers: string[]; // Liste d'ID des followers  
-
-    @Prop({ type: [String], default: [] }) 
-    following: string[]; // Liste d'ID des comptes suivis  
+ 
 
     @Prop({ type: Number, default: 0 }) 
     likes: number; // Nombre de likes reçus

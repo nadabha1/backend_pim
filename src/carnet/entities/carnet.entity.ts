@@ -27,6 +27,9 @@ export class Place {
 
   @Prop({ type: [String], default: [] })
   images: string[];
+  
+  @Prop({ default: 0 })
+  averageRating: number; // Note moyenne des avis
 }
 
 @Schema()

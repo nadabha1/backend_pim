@@ -11,6 +11,7 @@ import { CarnetModule } from './carnet/carnet.module';
 import { FollowModule } from './follow/follow.module';
 import { Preference } from './preferences/entities/preference.entity';
 import { PreferencesModule } from './preferences/preferences.module';
+import { ReviewModule } from './review/review.module';
 @Module({
   imports: [
     MailerModule.forRoot({
@@ -40,6 +41,7 @@ import { PreferencesModule } from './preferences/preferences.module';
     CarnetModule,
     FollowModule,
     PreferencesModule,
+    ReviewModule,
     
   ],  controllers: [AppController],
   providers: [AppService],
