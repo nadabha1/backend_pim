@@ -91,5 +91,8 @@ async getOwnerByPlace(@Param('placeId') placeId: string) {
   async getAllPlaces() {
     return this.carnetService.getAllPlaces();
   }
-
+  @Get('place/:placeId')
+  async getPlaceById(@Param('placeId') placeId: string) {
+    return this.carnetService.getPlaceById(placeId);
+  }
 }

@@ -51,6 +51,9 @@ unlockedPlaces: string[];
 preferences: Preference;
 @Prop({ type: Boolean, default: false })  
 isVerified: boolean;
+@Prop({ type: [Types.ObjectId], ref: 'Place', default: [] })
+favorites: Types.Array<Types.ObjectId>;  // Ajoutez cette ligne pour les places favorites
+
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
