@@ -23,7 +23,11 @@ export class MessageService {
   async getMessages(conversationId: string) {
     return await this.messageModel
       .find({ conversation: conversationId })  // 🔥 Fetch messages for this conversation
-      .populate('sender', 'name avatar')  // Optional: Get sender details
+      .populate({
+        path: 'sender', 
+        model:'User',
+        select: 'name' // Ajoute avatarUrl pour éviter le crash
+      })
       .exec();
   }
   
