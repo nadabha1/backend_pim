@@ -1,6 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Controller, Post, UploadedFile, UseInterceptors, HttpStatus, HttpException } from '@nestjs/common';
 import { UploadService } from './upload.service';
-
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -23,10 +22,13 @@ export class UploadController {
     limits: { fileSize: 5 * 1024 * 1024 }, // Optional: Limit file size to 5 MB
   }))
   uploadFile(@UploadedFile() file: Express.Multer.File) {
-    return {
-      message: 'File uploaded successfully!',
-      filename: file.filename,
-      url: `http://localhost:3000/uploads/${file.filename}`,
-    };
+    return new HttpException(
+      {
+        message: 'File uploaded successfully!',
+        filename: file.filename,
+        url: `http://localhost:3000/uploads/${file.filename}`,
+      },
+      HttpStatus.CREATED, // Force the status code to 201
+    );
   }
 }
