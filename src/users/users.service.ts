@@ -7,6 +7,7 @@ import { Preference } from 'src/preferences/entities/preference.entity';
 import { MailerService } from '@nestjs-modules/mailer';
 import { CarnetService } from 'src/carnet/carnet.service';
 import { PreferencesModule } from 'src/preferences/preferences.module';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class UsersService {
@@ -256,4 +257,27 @@ async getUnlockedPlaces(userId: string): Promise<string[]> {
 async getAllUsers(): Promise<User[]> {
   return this.userModel.find().exec(); // Récupère tous les utilisateurs
 }
+ // Ajouter une place aux favoris
+ async addPlaceToFavorites(userId: string, placeId: string): Promise<User> {
+  const user = await this.userModel.findById(userId);
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  // Convertir placeId en ObjectId
+  const placeObjectId = new Types.ObjectId(placeId);
+
+  // Vérifier si la place existe déjà dans les favoris
+  if (user.favorites.includes(placeObjectId)) {
+    throw new BadRequestException('Place already in favorites');
+  }
+
+  // Ajouter la place aux favoris
+  user.favorites.push(placeObjectId);
+  await user.save();
+
+  return user;
 }
+
+}
+

@@ -15,6 +15,7 @@ import { Carnet, CarnetSchema } from 'src/carnet/entities/carnet.entity';
       { name: User.name, schema: UserSchema },
       { name: Preference.name, schema: PreferenceSchema },
       { name: Carnet.name, schema: CarnetSchema },
+      
        // ✅ Add Preference Model
     ]),
   ],

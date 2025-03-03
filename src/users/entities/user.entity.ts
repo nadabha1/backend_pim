@@ -35,11 +35,7 @@ export class User extends Document {
     @Prop({ default: '' }) 
     profileImage: string;
 
-    @Prop({ type: [String], default: [] }) 
-    followers: string[]; // Liste d'ID des followers  
-
-    @Prop({ type: [String], default: [] }) 
-    following: string[]; // Liste d'ID des comptes suivis  
+ 
 
     @Prop({ type: Number, default: 0 }) 
     likes: number; // Nombre de likes reçus
@@ -55,6 +51,9 @@ unlockedPlaces: string[];
 preferences: Preference;
 @Prop({ type: Boolean, default: false })  
 isVerified: boolean;
+@Prop({ type: [Types.ObjectId], ref: 'Place', default: [] })
+favorites: Types.Array<Types.ObjectId>;  // Ajoutez cette ligne pour les places favorites
+
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

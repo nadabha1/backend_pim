@@ -228,5 +228,23 @@ async getAllPlaces(): Promise<any[]> {
     throw new InternalServerErrorException('Error retrieving places');
   }
 }
+async getPlaceById(placeId: string): Promise<any> {
+  // Find a carnet that contains the place with the given placeId
+  const carnet = await this.carnetModel.findOne({ 'places._id': placeId }).exec();
+
+  if (!carnet) {
+    throw new NotFoundException('Place not found');
+  }
+
+  // Retrieve the place data from the places array by its placeId
+  const place = carnet.places.find(p => (p as any)._id.toString() === placeId);
+  
+  if (!place) {
+    throw new NotFoundException('Place not found');
+  }
+
+  return place;
+}
+
 
 }

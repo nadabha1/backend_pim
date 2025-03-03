@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, UseInterceptors, UploadedFile, NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { User } from './entities/user.entity';
@@ -101,6 +101,25 @@ export class UsersController {
 async getUnlockedPlaces(@Param('userId') userId: string) {
   return this.usersService.getUnlockedPlaces(userId);
 }
+
+@Put(':userId/favorites/:placeId')
+async addPlaceToFavorites(
+  @Param('userId') userId: string,
+  @Param('placeId') placeId: string
+) {
+  return this.usersService.addPlaceToFavorites(userId, placeId);
+}
+
+@Get(':userId/favorites')
+async getUserFavorites(@Param('userId') userId: string) {
+  const user = await this.usersService.findById(userId);
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+  const favorites = user.favorites.map(fav => String(fav)); // Convert to string
+  return favorites;
+}
+
 
 
 }

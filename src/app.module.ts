@@ -11,8 +11,12 @@ import { CarnetModule } from './carnet/carnet.module';
 import { FollowModule } from './follow/follow.module';
 import { Preference } from './preferences/entities/preference.entity';
 import { PreferencesModule } from './preferences/preferences.module';
+import { ReviewModule } from './review/review.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { UploadModule } from './upload/upload.module';
 import { MessageModule } from './message/message.module';
 import { ConversationModule } from './conversation/conversation.module';
+
 @Module({
   imports: [
     MailerModule.forRoot({
@@ -36,12 +40,18 @@ import { ConversationModule } from './conversation/conversation.module';
         },
       },
     }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'), // Serve files from 'uploads' directory
+      serveRoot: '/uploads', // URL prefix for accessing files
+    }),
     MongooseModule.forRoot('mongodb://localhost/nestjs_app'),
     UsersModule,
     AuthModule,
     CarnetModule,
     FollowModule,
     PreferencesModule,
+    ReviewModule,
+    UploadModule,
     MessageModule,
     ConversationModule,
     
