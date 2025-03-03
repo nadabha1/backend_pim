@@ -8,6 +8,13 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { join } from 'path';
 import { CarnetModule } from './carnet/carnet.module';
+import { FollowModule } from './follow/follow.module';
+import { Preference } from './preferences/entities/preference.entity';
+import { PreferencesModule } from './preferences/preferences.module';
+import { EventModule } from './event/event.module';
+import { MessageModule } from './messages/message.module';
+
+
 @Module({
   imports: [
     MailerModule.forRoot({
@@ -31,10 +38,15 @@ import { CarnetModule } from './carnet/carnet.module';
         },
       },
     }),
-    MongooseModule.forRoot('mongodb://localhost/nestjs_app'),
+    MongooseModule.forRoot('mongodb+srv://houssem:houssem@projet.zkvpi.mongodb.net/nestjs_app'),
     UsersModule,
     AuthModule,
     CarnetModule,
+    FollowModule,
+    PreferencesModule,
+    EventModule,
+    MessageModule,
+    
   ],  controllers: [AppController],
   providers: [AppService],
   
