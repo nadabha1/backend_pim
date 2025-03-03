@@ -14,6 +14,8 @@ import { PreferencesModule } from './preferences/preferences.module';
 import { ReviewModule } from './review/review.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { UploadModule } from './upload/upload.module';
+import { MessageModule } from './message/message.module';
+import { ConversationModule } from './conversation/conversation.module';
 
 @Module({
   imports: [
@@ -49,7 +51,9 @@ import { UploadModule } from './upload/upload.module';
     FollowModule,
     PreferencesModule,
     ReviewModule,
-    UploadModule
+    UploadModule,
+    MessageModule,
+    ConversationModule,
     
   ],  controllers: [AppController],
   providers: [AppService],
