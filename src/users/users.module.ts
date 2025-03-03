@@ -21,7 +21,7 @@ import { Carnet, CarnetSchema } from 'src/carnet/entities/carnet.entity';
   ],
   controllers: [UsersController],
   providers: [UsersService,CarnetService],
-  exports: [UsersService,CarnetService], // Export pour utilisation dans AuthService
+  exports: [UsersService,CarnetService,MongooseModule], // Export pour utilisation dans AuthService
 
 })
 export class UsersModule {}

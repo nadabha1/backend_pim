@@ -16,6 +16,8 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { UploadModule } from './upload/upload.module';
 import { MessageModule } from './message/message.module';
 import { ConversationModule } from './conversation/conversation.module';
+import { EventModule } from './event/event.module';
+import { MessagesModule } from './messages/messages.module';
 
 @Module({
   imports: [
@@ -54,6 +56,8 @@ import { ConversationModule } from './conversation/conversation.module';
     UploadModule,
     MessageModule,
     ConversationModule,
+    EventModule,
+    MessagesModule,
     
   ],  controllers: [AppController],
   providers: [AppService],
