@@ -16,8 +16,8 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { UploadModule } from './upload/upload.module';
 import { MessageModule } from './message/message.module';
 import { ConversationModule } from './conversation/conversation.module';
-import { NotificationModule } from './notification/notification.module';
-import { AiModule } from './ai/ai.module';
+import { EventModule } from './event/event.module';
+import { MessagesModule } from './messages/messages.module';
 
 @Module({
   imports: [
@@ -56,8 +56,8 @@ import { AiModule } from './ai/ai.module';
     UploadModule,
     MessageModule,
     ConversationModule,
-    NotificationModule,
-    AiModule,
+    EventModule,
+    MessagesModule,
     
   ],  controllers: [AppController],
   providers: [AppService],

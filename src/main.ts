@@ -6,7 +6,6 @@ async function bootstrap() {
 
   await app.listen(3000, '0.0.0.0');
 
-  // Debug: Afficher les routes enregistrées
-
+  
 }
 bootstrap();
