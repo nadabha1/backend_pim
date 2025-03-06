@@ -47,13 +47,15 @@ export class User extends Document {
 unlockedCarnets: string[]; // Liste des ID des carnets débloqués  
 @Prop({ type: [String], default: [] }) 
 unlockedPlaces: string[]; 
-@Prop({ type: Types.ObjectId, ref: 'Preference', default: null }) 
-preferences: Preference;
+
 @Prop({ type: Boolean, default: false })  
 isVerified: boolean;
 @Prop({ type: [Types.ObjectId], ref: 'Place', default: [] })
 favorites: Types.Array<Types.ObjectId>;  // Ajoutez cette ligne pour les places favorites
-
+@Prop({ type: [String], default: [] }) 
+preferences: string[];
+@Prop({ type: [String], default: [] }) 
+interactions: string[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

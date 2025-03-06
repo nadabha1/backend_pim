@@ -278,6 +278,12 @@ async getAllUsers(): Promise<User[]> {
 
   return user;
 }
+async addUserPreference(userId: string, preferenceId: string) {
+  return this.userModel.findByIdAndUpdate(userId, { $set: { preferences: preferenceId } });
+}
 
+async addUserFavorite(userId: string, placeId: string) {
+  return this.userModel.findByIdAndUpdate(userId, { $push: { favorites: placeId } });
+}
 }
 
