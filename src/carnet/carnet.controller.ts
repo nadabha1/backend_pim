@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, NotFoundException } from '@nestjs/common';
 import { CarnetService } from './carnet.service';
 
 @Controller('carnets')
@@ -49,9 +49,13 @@ async addPlace(
   }
 
   @Put(':id')
-  updateCarnet(@Param('id') id: string, @Body() data: any) {
-    return this.carnetService.updateCarnet(id, data);
+  async updateCarnet(
+    @Param('id') carnetId: string,
+    @Body() updateData: any
+  ) {
+    return this.carnetService.updateCarnet(carnetId, updateData);
   }
+  
 
   @Delete(':id')
   deleteCarnet(@Param('id') id: string) {
@@ -95,4 +99,25 @@ async getOwnerByPlace(@Param('placeId') placeId: string) {
   async getPlaceById(@Param('placeId') placeId: string) {
     return this.carnetService.getPlaceById(placeId);
   }
+
+  @Put(':id/places/:placeId')
+async updatePlace(
+  @Param('id') carnetId: string,
+  @Param('placeId') placeId: string,
+  @Body() updateData: any
+) {
+  return this.carnetService.updatePlace(carnetId, placeId, updateData);
+}
+@Get('place/:placeId/carnetid')
+async findCarnetIdByPlaceId(@Param('placeId') placeId: string): Promise<string | null> {
+  const carnetId = await this.carnetService.findCarnetIdByPlaceId(placeId);
+  
+  if (!carnetId) {
+    throw new NotFoundException('Carnet not found for the given place');
+  }
+
+  return carnetId;  // Retourne l'ID du carnet trouvé
+}
+
+
 }

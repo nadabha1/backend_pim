@@ -114,15 +114,35 @@ async getCarnetByUserId(userId: string): Promise<Carnet | null> {
     return carnet;
   }
 
-  async updateCarnet(id: string, data: any): Promise<Carnet> {
-    return this.carnetModel.findByIdAndUpdate(id, data, { new: true }).exec();
+  async updateCarnet(carnetId: string, updateData: any): Promise<Carnet> {
+    const carnet = await this.carnetModel.findByIdAndUpdate(carnetId, updateData, { new: true }).exec();
+    if (!carnet) {
+      throw new NotFoundException('Carnet not found');
+    }
+    return carnet;
   }
-
-  async deleteCarnet(id: string): Promise<Carnet> {
-    return this.carnetModel.findByIdAndDelete(id).exec();
-
   
+  async deleteCarnet(id: string): Promise<Carnet> {
+    // Retrouver l'utilisateur et supprimer son carnetId
+    const user = await this.userModel.findOne({ carnetId: id });
+    if (user) {
+      user.carnetId = null; // Supprimer l'association avec le carnet
+      await user.save();
+      console.log(`CarnetId supprimé pour l'utilisateur : ${user.email}`);
+    } else {
+      console.log("Aucun utilisateur avec ce carnetId trouvé.");
+    }
+  
+    // Supprimer le carnet
+    const deletedCarnet = await this.carnetModel.findByIdAndDelete(id).exec();
+    if (!deletedCarnet) {
+      throw new NotFoundException('Carnet non trouvé');
+    }
+  
+    return deletedCarnet;
   }
+  
+  
 //tesssttt
   async unlockCarnet(userId: string, carnetId: string): Promise<{ message: string; coins: number }> {
     const user = await this.userModel.findById(userId);
@@ -245,6 +265,32 @@ async getPlaceById(placeId: string): Promise<any> {
 
   return place;
 }
+
+
+async updatePlace(carnetId: string, placeId: string, updateData: any): Promise<any> {
+  const carnet = await this.carnetModel.findById(carnetId);
+  if (!carnet) throw new NotFoundException('Carnet not found');
+
+  const placeIndex = carnet.places.findIndex(p => (p as any)._id.toString() === placeId);
+  if (placeIndex === -1) throw new NotFoundException('Place not found');
+
+  // Appliquer les modifications à la place
+  Object.assign(carnet.places[placeIndex], updateData);
+
+  await carnet.save();
+  return carnet.places[placeIndex];
+}
+
+async findCarnetIdByPlaceId(placeId: string): Promise<string | null> {
+  const placeObjectId = new Types.ObjectId(placeId); // Conversion en ObjectId
+  const carnet = await this.carnetModel.findOne({ "places._id": placeObjectId }).exec();
+  if (carnet) {
+    return carnet.id;  // Retourne l'ID du carnet
+  }
+  return null;  // Retourne null si aucun carnet n'est trouvé
+}
+
+
 
 
 }

@@ -3,7 +3,7 @@ import { Document, Types } from 'mongoose';
 export type CarnetDocument = Carnet & Document;
 
 @Schema()
-export class Place {
+export class Place extends Document {
 
  
 
