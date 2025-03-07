@@ -1,34 +1,34 @@
-import { Controller, Post, UploadedFile, UseInterceptors, HttpStatus, HttpException } from '@nestjs/common';
-import { UploadService } from './upload.service';
+import { Controller, Post, UploadedFile, UseInterceptors, HttpStatus } from '@nestjs/common';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { extname, join } from 'path';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('upload')
 export class UploadController {
-  constructor(private readonly uploadService: UploadService) {}
-
   @Post()
   @UseInterceptors(FileInterceptor('photo', {
     storage: diskStorage({
-      destination: './uploads', // Directory where files will be stored
+      destination: './dist/uploads',  // Enregistre dans dist/uploads après build
       filename: (req, file, cb) => {
-        // Generate a unique filename with the original extension
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const extension = extname(file.originalname);
         cb(null, `${uniqueSuffix}${extension}`);
       },
     }),
-    limits: { fileSize: 5 * 1024 * 1024 }, // Optional: Limit file size to 5 MB
+    limits: { fileSize: 5 * 1024 * 1024 },
   }))
   uploadFile(@UploadedFile() file: Express.Multer.File) {
-    return new HttpException(
-      {
-        message: 'File uploaded successfully!',
-        filename: file.filename,
-        url: `http://localhost:3000/uploads/${file.filename}`,
-      },
-      HttpStatus.CREATED, // Force the status code to 201
-    );
+    if (!file) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'No file uploaded',
+      };
+    }
+
+    return {
+      status: HttpStatus.CREATED,
+      message: 'File uploaded successfully!',
+      filename: file.filename,  // Retourne uniquement le nom du fichier
+    };
   }
 }
