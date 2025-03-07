@@ -281,7 +281,9 @@ async getAllUsers(): Promise<User[]> {
 async addUserPreference(userId: string, preferenceId: string) {
   return this.userModel.findByIdAndUpdate(userId, { $set: { preferences: preferenceId } });
 }
-
+async updateUser(userId: string, updateData: Partial<User>): Promise<User> {
+  return this.userModel.findByIdAndUpdate(userId, updateData, { new: true });
+}
 async addUserFavorite(userId: string, placeId: string) {
   return this.userModel.findByIdAndUpdate(userId, { $push: { favorites: placeId } });
 }

@@ -121,27 +121,18 @@ async getCarnetByUserId(userId: string): Promise<Carnet | null> {
     }
     return carnet;
   }
-  
-  async deleteCarnet(id: string): Promise<Carnet> {
-    // Retrouver l'utilisateur et supprimer son carnetId
-    const user = await this.userModel.findOne({ carnetId: id });
-    if (user) {
-      user.carnetId = null; // Supprimer l'association avec le carnet
-      await user.save();
-      console.log(`CarnetId supprimé pour l'utilisateur : ${user.email}`);
-    } else {
-      console.log("Aucun utilisateur avec ce carnetId trouvé.");
+  async deleteCarnet(carnetId: string, userId: string): Promise<void> {
+    // 🗑 Supprimer le carnet
+    const carnet = await this.carnetModel.findByIdAndDelete(carnetId);
+    if (!carnet) {
+      throw new NotFoundException('Carnet introuvable');
     }
-  
-    // Supprimer le carnet
-    const deletedCarnet = await this.carnetModel.findByIdAndDelete(id).exec();
-    if (!deletedCarnet) {
-      throw new NotFoundException('Carnet non trouvé');
-    }
-  
-    return deletedCarnet;
-  }
-  
+
+    // 🧹 Supprimer le carnetId dans l'entité User
+    await this.userModel.findByIdAndUpdate(userId, {
+      $unset: { carnetId: '' }, // 🗑 Supprime la référence du carnet
+    });
+  } 
   
 //tesssttt
   async unlockCarnet(userId: string, carnetId: string): Promise<{ message: string; coins: number }> {
