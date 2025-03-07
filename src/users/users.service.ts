@@ -285,5 +285,27 @@ async addUserPreference(userId: string, preferenceId: string) {
 async addUserFavorite(userId: string, placeId: string) {
   return this.userModel.findByIdAndUpdate(userId, { $push: { favorites: placeId } });
 }
+async removePlaceFromFavorites(userId: string, placeId: string): Promise<User> {
+  const user = await this.userModel.findById(userId);
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  // Convertir placeId en ObjectId
+  const placeObjectId = new Types.ObjectId(placeId);
+
+  // Vérifier si la place est bien dans les favoris
+  if (!user.favorites.some(id => id.equals(placeObjectId))) {
+    throw new BadRequestException('Place not found in favorites');
+  }
+
+  // Supprimer la place des favoris
+  user.favorites = user.favorites.toObject().filter(id => !id.equals(placeObjectId));
+  await user.save();
+
+  return user;
+}
+
+
 }
 

@@ -120,6 +120,13 @@ async getUserFavorites(@Param('userId') userId: string) {
   return favorites;
 }
 
+@Delete(':userId/favorites/:placeId')
+async removePlaceFromFavorites(
+  @Param('userId') userId: string,
+  @Param('placeId') placeId: string
+) {
+  return this.usersService.removePlaceFromFavorites(userId, placeId);
+}
 
 
 }
