@@ -121,6 +121,7 @@ async getCarnetByUserId(userId: string): Promise<Carnet | null> {
     }
     return carnet;
   }
+  
   async deleteCarnet(carnetId: string, userId: string): Promise<void> {
     // 🗑 Supprimer le carnet
     const carnet = await this.carnetModel.findByIdAndDelete(carnetId);
@@ -133,6 +134,7 @@ async getCarnetByUserId(userId: string): Promise<Carnet | null> {
       $unset: { carnetId: '' }, // 🗑 Supprime la référence du carnet
     });
   } 
+  
   
 //tesssttt
   async unlockCarnet(userId: string, carnetId: string): Promise<{ message: string; coins: number }> {

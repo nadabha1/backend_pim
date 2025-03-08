@@ -76,4 +76,44 @@ export class EventService {
     }
     return event;
   }
+  async getEventsByUser(userId: string) {
+    return this.eventModel.find({ where: { creatorId: userId } });
+  }
+  async updateEvent(eventId: string, updateData: { title?: string; description?: string; date?: string; location?: string; joinPrice?: number }) {
+    const eventObjectId = Types.ObjectId.createFromHexString(eventId);
+    const event = await this.eventModel.findById(eventObjectId);
+    
+    if (!event) throw new Error('Event not found');
+    
+    // Update fields that are provided
+    if (updateData.title) event.title = updateData.title;
+    if (updateData.description) event.description = updateData.description;
+    if (updateData.date) event.date = new Date(updateData.date);
+    if (updateData.location) event.location = updateData.location;
+    if (updateData.joinPrice !== undefined) event.joinPrice = updateData.joinPrice;
+
+    await event.save();
+    return event;
+  }
+  async deleteEvent(eventId: string) {
+    const eventObjectId = Types.ObjectId.createFromHexString(eventId);
+    const event = await this.eventModel.findById(eventObjectId);
+    
+    if (!event) throw new Error('Event not found');
+    
+    // Refund coins to participants (optional)
+    for (let userId of event.participants) {
+      const user = await this.userModel.findById(userId);
+      if (user) {
+        user.coins += event.joinPrice; // Refund the join price
+        await user.save();
+      }
+    }
+  
+    // Delete the event using deleteOne or findByIdAndDelete
+    await this.eventModel.findByIdAndDelete(eventObjectId);
+  
+    return { message: 'Event deleted successfully' };
+  }
+  
 }
