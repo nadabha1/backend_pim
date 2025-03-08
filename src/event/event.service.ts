@@ -76,4 +76,10 @@ export class EventService {
     }
     return event;
   }
+  async getEventsByUser(userId: string) {
+    return this.eventModel.find({ where: { creatorId: userId } });
+  }
+  
+  
+  
 }

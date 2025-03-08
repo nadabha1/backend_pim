@@ -32,4 +32,10 @@ export class EventController {
   async join(@Param('id') id: string, @Body() body: { userId: string }) {
     return await this.eventService.joinEvent(id, body.userId);
   }
+  @Get('user/:userId')
+  async getUserEvents(@Param('userId') userId: string) {
+    return this.eventService.getEventsByUser(userId);
+  }
+  
+
 }

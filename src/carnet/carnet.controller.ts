@@ -58,8 +58,15 @@ async addPlace(
   
 
   @Delete(':id')
-  deleteCarnet(@Param('id') id: string) {
-    return this.carnetService.deleteCarnet(id);
+  async deleteCarnet(
+    @Param('id') carnetId: string,
+    @Body('userId') userId: string,
+  ) {
+    if (!userId) {
+      throw new NotFoundException('User ID is required');
+    }
+    await this.carnetService.deleteCarnet(carnetId, userId);
+    return { message: 'Carnet supprimé avec succès' };
   }
 //tessssst
   @Put('user/:userId/unlock/:carnetId')
