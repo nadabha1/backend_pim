@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Param, Query } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Query, Patch, Delete } from '@nestjs/common';
 import { EventService } from './event.service';
 
 @Controller('events')
@@ -36,6 +36,18 @@ export class EventController {
   async getUserEvents(@Param('userId') userId: string) {
     return this.eventService.getEventsByUser(userId);
   }
-  
 
+
+  // Add the update route
+  @Patch(':id')
+  async update(
+    @Param('id') id: string, 
+    @Body() body: { title?: string; description?: string; date?: string; location?: string; joinPrice?: number }
+  ) {
+    return await this.eventService.updateEvent(id, body);
+  }
+  @Delete(':id')
+  async delete(@Param('id') id: string) {
+    return await this.eventService.deleteEvent(id);
+  }
 }
