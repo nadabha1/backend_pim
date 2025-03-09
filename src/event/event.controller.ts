@@ -1,12 +1,23 @@
 import { Controller, Post, Get, Body, Param, Query, Patch, Delete } from '@nestjs/common';
 import { EventService } from './event.service';
+import { EventType } from './entities/event.entity';
 
 @Controller('events')
 export class EventController {
   constructor(private readonly eventService: EventService) {}
 
   @Post()
-  async create(@Body() body: { creatorId: string; title: string; description: string; date: string; location: string; joinPrice?: number }) {
+  async create(
+    @Body() body: {
+      creatorId: string;
+      title: string;
+      description: string;
+      date: string;
+      location: string;
+      joinPrice?: number;
+      type: EventType;
+    }
+  ) {
     const event = await this.eventService.createEvent(
       body.creatorId,
       body.title,
@@ -14,11 +25,13 @@ export class EventController {
       new Date(body.date),
       body.location,
       body.joinPrice,
+      body.type // ✅ Include event type
     );
     return event;
   }
+  
 
-  @Get()
+  @Get("")
   async findAlluser(@Query('userId') userId: string) {
     return await this.eventService.findAll(userId);
   }
@@ -50,4 +63,9 @@ export class EventController {
   async delete(@Param('id') id: string) {
     return await this.eventService.deleteEvent(id);
   }
+  @Get('specific/:userId')
+async findSpecificEvents(@Param('userId') userId: string) {
+  return await this.eventService.findSpecificEvents(userId);
+}
+
 }

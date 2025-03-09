@@ -3,27 +3,44 @@ import { Document, Types } from 'mongoose';
 
 export type EventDocument = Event & Document;
 
-@Schema({ timestamps: true }) // Pour suivre la date de création et de mise à jour
+// Define event types
+export enum EventType {
+  CONCERTS = 'Concerts',
+  WORKSHOPS = 'Workshops',
+  NETWORKING = 'Networking Events',
+  SPORTS = 'Sports Activities',
+  CULTURAL = 'Cultural Festivals',
+  TECH = 'Tech Meetups',
+  ART = 'Art Exhibitions',
+  OTHER = 'Other',
+}
+
+@Schema({ timestamps: true }) 
 export class Event {
   @Prop({ required: true })
-  title: string; // Titre de l'événement
+  title: string;
 
   @Prop({ required: true })
-  description: string; // Description de l'événement
+  description: string;
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  creatorId: Types.ObjectId; // ID de l'utilisateur qui crée l'événement
+  creatorId: Types.ObjectId;
 
   @Prop({ required: true })
-  date: Date; // Date de l'événement
+  date: Date;
 
   @Prop({ required: true })
-  location: string; // Lieu de l'événement
+  location: string;
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }], default: [] })
-  participants: Types.ObjectId[]; // Liste des participants (référence aux utilisateurs)
-  @Prop({ type: Number, default: 5 }) // Default join price is 5 coins
+  participants: Types.ObjectId[];
+
+  @Prop({ type: Number, default: 5 }) 
   joinPrice: number;
+
+  // ✅ Add the event type enum
+  @Prop({ required: true, enum: EventType, default: EventType.OTHER })
+  type: EventType;
 }
 
 export const EventSchema = SchemaFactory.createForClass(Event);
