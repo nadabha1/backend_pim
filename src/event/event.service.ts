@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { Types } from 'mongoose';
 import { Event, EventDocument } from './entities/event.entity';
 import { User, UserDocument } from 'src/users/entities/user.entity';
+import { ConversationService } from 'src/conversation/conversation.service';
  // Adjust path as needed
 
 @Injectable()
@@ -11,10 +12,16 @@ export class EventService {
   constructor(
     @InjectModel(Event.name) private eventModel: Model<EventDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    private conversationService: ConversationService, // Adjust path as needed
   ) {}
 
   async createEvent(creatorId: string, title: string, description: string, date: Date, location: string, joinPrice: number = 5) {
     const creatorObjectId = Types.ObjectId.createFromHexString(creatorId);
+
+    const conversation =await this.conversationService.createConversationGroup({
+      participants: creatorId,
+      title: title,  // Utiliser le titre de l'événement comme nom du groupe
+    });
 
     // Create the event with creator as a participant
     const event = new this.eventModel({
@@ -25,6 +32,7 @@ export class EventService {
       location,
       participants: [creatorObjectId], // Creator is automatically a participant
       joinPrice,
+      conversationId: conversation._id,  // ➡️ Associe l'ID de la conversation ici
     });
 
     // Save the event first to get the event ID
@@ -38,6 +46,7 @@ export class EventService {
     } else {
       throw new Error('Creator not found');
     }
+
 
     return savedEvent;
   }
@@ -54,9 +63,16 @@ export class EventService {
       .exec();
   }
 
-  async findAllEvents() {
-    return await this.eventModel.find().populate('participants').exec();
-  }
+ // event.service.ts
+async findAllEvents() {
+  const events = await this.eventModel
+    .find()
+    .populate('participants')
+    .exec();
+  
+  console.log("📢 Events trouvés:", events);  // ➡️ LOG pour vérifier
+  return events;
+}
 
   async joinEvent(eventId: string, userId: string) {
     const eventObjectId = Types.ObjectId.createFromHexString(eventId);
@@ -65,17 +81,29 @@ export class EventService {
     if (!event) throw new Error('Event not found');
 
     if (!event.participants.includes(userObjectId)) {
-      const user = await this.userModel.findById(userObjectId);
-      if (!user || user.coins < event.joinPrice) {
-        throw new Error('Insufficient coins');
-      }
-      event.participants.push(userObjectId);
-      user.coins -= event.joinPrice;
-      await event.save();
-      await user.save();
+        const user = await this.userModel.findById(userObjectId);
+        if (!user || user.coins < event.joinPrice) {
+            throw new Error('Insufficient coins');
+        }
+        event.participants.push(userObjectId);
+        user.coins -= event.joinPrice;
+        await event.save();
+        await user.save();
     }
+
+    // ✅ Récupération correcte de la conversation
+    const conversation = await this.conversationService.findConversationByTitle(event.title);
+    if (conversation) {
+        // ✅ Correction du type avec "as string"
+        await this.conversationService.addUserToConversation(conversation._id.toString(), userId);
+    } else {
+        console.log(`❌ Conversation not found for event: ${event.title}`);
+    }
+
     return event;
-  }
+}
+
+
   async getEventsByUser(userId: string) {
     return this.eventModel.find({ where: { creatorId: userId } });
   }

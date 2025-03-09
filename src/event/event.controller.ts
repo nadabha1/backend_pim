@@ -23,9 +23,10 @@ export class EventController {
     return await this.eventService.findAll(userId);
   }
   @Get("all")
-  async findAll() {
-    
-    return await this.eventService.findAllEvents(); // Fetch all events if no userId
+  async getAllEvents() {
+    const events = await this.eventService.findAllEvents();
+    console.log("📢 Events fetched from API:", events);  // ➡️ LOG pour vérifier
+    return events;
   }
 
   @Post(':id/join')

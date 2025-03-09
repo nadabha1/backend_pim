@@ -17,7 +17,8 @@ import { UploadModule } from './upload/upload.module';
 import { MessageModule } from './message/message.module';
 import { ConversationModule } from './conversation/conversation.module';
 import { EventModule } from './event/event.module';
-import { MessagesModule } from './messages/messages.module';
+import { ChatGateway } from './chat/chat.gateway';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -57,10 +58,10 @@ import { MessagesModule } from './messages/messages.module';
     MessageModule,
     ConversationModule,
     EventModule,
-    MessagesModule,
+    ChatModule,
     
   ],  controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService,ChatGateway],
   
 })
 export class AppModule {}

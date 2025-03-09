@@ -17,6 +17,7 @@ export class MessageService {
       content: content,
     });
 
+
     return await message.save();
   }
 
@@ -31,7 +32,13 @@ export class MessageService {
       .exec();
   }
   
-  
+  async getMessagesByConversation(conversationId: string): Promise<Message[]> {
+    return this.messageModel
+      .find({ conversation: conversationId })
+      .sort({ createdAt: 1 })
+      .populate('sender', 'name')  // 🔄 Utiliser `populate` pour obtenir le nom de l'utilisateur
+      .exec();
+  }
   async getMessagesForUser(userId: string) {
     return this.messageModel.find({ $or: [{ senderId: userId }, { receiverId: userId }] });
   }

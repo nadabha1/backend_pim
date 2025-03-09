@@ -1,16 +1,20 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { NotificationService } from './notification.service';
 import { NotificationController } from './notification.controller';
 import { Notification, NotificationSchema } from './entities/notification.entity';
 import { NotificationGateway } from './socket.gateway';
+import { MessageModule } from 'src/message/message.module';
+import { ConversationModule } from 'src/conversation/conversation.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Notification.name, schema: NotificationSchema }]), // ✅ Ajoute ceci
+    forwardRef(() => MessageModule),
+    forwardRef(() => ConversationModule),
+    MongooseModule.forFeature([{ name: 'Notification', schema: NotificationSchema }]),
   ],
   controllers: [NotificationController],
-  providers: [NotificationService,NotificationGateway],
-  exports: [NotificationService], // ✅ Ajoute ceci si nécessaire
+  providers: [NotificationService, NotificationGateway],  // ✅ Ajouter NotificationGateway ici
+  exports: [NotificationService, MongooseModule, NotificationGateway],  // ✅ Exporter NotificationGateway ici
 })
 export class NotificationModule {}

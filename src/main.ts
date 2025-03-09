@@ -8,6 +8,12 @@ async function bootstrap() {
 
   await app.listen(3000, '0.0.0.0');
 
+  app.enableCors({
+    origin: '*',  // ✅ Autoriser toutes les origines pour les tests
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: 'Content-Type, Accept',
+  });
+  
   
 }
 bootstrap();

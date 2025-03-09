@@ -24,6 +24,10 @@ export class Event {
   participants: Types.ObjectId[]; // Liste des participants (référence aux utilisateurs)
   @Prop({ type: Number, default: 5 }) // Default join price is 5 coins
   joinPrice: number;
+
+  @Prop({ type: Types.ObjectId, ref: 'Conversation', required: true })  // ➡️ Ajoute cette ligne
+  conversationId: Types.ObjectId;  // ➡️ ID de la conversation associée
+
 }
 
 export const EventSchema = SchemaFactory.createForClass(Event);

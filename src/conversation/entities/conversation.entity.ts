@@ -3,6 +3,9 @@ import { Document, Types } from 'mongoose';
 
 @Schema({ timestamps: true })
 export class Conversation extends Document {
+  @Prop({ type: String, required: false,default:'' })
+  title: string;  // ✅ Nom du groupe
+
   @Prop({ type: [{ type: Types.ObjectId, ref: 'User', required: true }] })
   participants: Types.ObjectId[];
 

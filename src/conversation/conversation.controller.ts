@@ -9,6 +9,9 @@ export class ConversationController {
   @Get(':userId')
   async getUserConversations(@Param('userId') userId: string) {
     return this.conversationService.getUserConversations(userId);
+  }  @Get('/name/:userId')
+  async getUserConversationsname(@Param('userId') userId: string) {
+    return this.conversationService.getUserConversationsname(userId);
   }
 
   /*@Post()
@@ -26,7 +29,7 @@ export class ConversationController {
 
   @Post(':userId')
   async createConversation(@Param('userId') userId: string, @Body('otherUserId') otherUserId: string) {
-  return await this.conversationService.createConversation2(userId, otherUserId);}
+  return await this.conversationService.createConversationavecnot(userId, otherUserId);}
 
   
 
