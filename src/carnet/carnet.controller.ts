@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, NotFoundException, InternalServerErrorException, Query } from '@nestjs/common';
 import { CarnetService } from './carnet.service';
+import { Carnet, Place } from './entities/carnet.entity';
 
 @Controller('carnets')
 export class CarnetController {
@@ -133,5 +134,16 @@ async deletePlace(
   return this.carnetService.deletePlace(carnetId, placeId);
 }
 
+ // Recherche des places par catégorie
+ @Get('category/:category')
+ async getPlacesByCategory(@Param('category') category: string): Promise<Place[]> {
+   return this.carnetService.getPlacesByCategory(category);
+ }
+
+ // Recherche des places par plusieurs catégories
+ @Get('categories')
+ async getPlacesByCategories(@Query('categories') categories: string[]): Promise<Place[]> {
+   return this.carnetService.getPlacesByCategories(categories);
+ }
 
 }
