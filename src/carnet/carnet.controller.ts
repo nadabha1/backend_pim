@@ -125,6 +125,13 @@ async findCarnetIdByPlaceId(@Param('placeId') placeId: string): Promise<string |
 
   return carnetId;  // Retourne l'ID du carnet trouvé
 }
+@Delete(':carnetId/places/:placeId')
+async deletePlace(
+  @Param('carnetId') carnetId: string,
+  @Param('placeId') placeId: string
+) {
+  return this.carnetService.deletePlace(carnetId, placeId);
+}
 
 
 }

@@ -283,6 +283,24 @@ async findCarnetIdByPlaceId(placeId: string): Promise<string | null> {
   return null;  // Retourne null si aucun carnet n'est trouvé
 }
 
+async deletePlace(carnetId: string, placeId: string): Promise<Carnet> {
+  const carnet = await this.carnetModel.findById(carnetId);
+  if (!carnet) {
+    throw new NotFoundException('Carnet not found');
+  }
+
+  // Find the index of the place to be deleted
+  const placeIndex = carnet.places.findIndex((p) => (p as any)._id.toString() === placeId);
+  if (placeIndex === -1) {
+    throw new NotFoundException('Place not found');
+  }
+
+  // Remove the place from the carnet's places array
+  carnet.places.splice(placeIndex, 1);
+
+  await carnet.save();
+  return carnet;
+}
 
 
 
