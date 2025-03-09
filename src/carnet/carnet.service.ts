@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Carnet, CarnetDocument } from './entities/carnet.entity';
+import { Carnet, CarnetDocument, Place } from './entities/carnet.entity';
 import { User, UserDocument } from 'src/users/entities/user.entity';
 
 @Injectable()
@@ -283,7 +283,52 @@ async findCarnetIdByPlaceId(placeId: string): Promise<string | null> {
   return null;  // Retourne null si aucun carnet n'est trouvé
 }
 
+async deletePlace(carnetId: string, placeId: string): Promise<Carnet> {
+  const carnet = await this.carnetModel.findById(carnetId);
+  if (!carnet) {
+    throw new NotFoundException('Carnet not found');
+  }
 
+  // Find the index of the place to be deleted
+  const placeIndex = carnet.places.findIndex((p) => (p as any)._id.toString() === placeId);
+  if (placeIndex === -1) {
+    throw new NotFoundException('Place not found');
+  }
+
+  // Remove the place from the carnet's places array
+  carnet.places.splice(placeIndex, 1);
+
+  await carnet.save();
+  return carnet;
+}
+
+ // Recherche des places dans un carnet par catégorie
+ async getPlacesByCategory(category: string): Promise<Place[]> {
+  const carnet = await this.carnetModel.findOne({
+    'places.categories': category, // Recherche de places avec la catégorie donnée
+  }).exec();
+  
+  if (!carnet) {
+    return []; // Si aucun carnet trouvé, retourner un tableau vide
+  }
+
+  return carnet.places.filter(place => place.categories.includes(category));
+}
+
+// Recherche des places dans un carnet par plusieurs catégories
+async getPlacesByCategories(categories: string[]): Promise<Place[]> {
+  const carnet = await this.carnetModel.findOne({
+    'places.categories': { $in: categories }, // Recherche des places qui ont l'une des catégories spécifiées
+  }).exec();
+
+  if (!carnet) {
+    return []; // Si aucun carnet trouvé, retourner un tableau vide
+  }
+
+  return carnet.places.filter(place => 
+    place.categories.some(category => categories.includes(category))
+  );
+}
 
 
 }
