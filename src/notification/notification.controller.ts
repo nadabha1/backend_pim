@@ -33,14 +33,17 @@ export class NotificationController {
   }
 
   // 🟢 Marquer une notification comme lue
-  @Patch(':id/read')
-  async markAsRead(@Param('id') id: string) {
-    await this.notificationService.markAsRead(id);
-    return {
-      statusCode: HttpStatus.OK,
-      message: 'Notification marquée comme lue',
-    };
-  }
+  // 🟢 Marquer une notification comme lue et retourner ses détails
+@Patch(':id/read')
+async markAsRead(@Param('id') id: string) {
+  const notification = await this.notificationService.markAsRead(id);
+  return {
+    statusCode: HttpStatus.OK,
+    message: 'Notification marquée comme lue',
+    data: notification, // 🟢 Retourner les détails de la notification
+  };
+}
+
 
   // 🟢 Supprimer une notification
   @Delete(':id')

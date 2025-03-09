@@ -20,12 +20,15 @@ export class NotificationGateway {
     recipientId,
     type,
     content,
+    data = {}, // 🟢 Ajouter `data` avec une valeur par défaut
   }: {
     senderId: string;
     recipientId: string;
     type: string;
     content: string;
+    data?: Record<string, string>; // 🟢 Déclarer `data` comme optionnel
   }) {
+  
     console.log(`📢 Envoi d'une notification à ${recipientId} : ${content}`);
 
     const notification = await this.notificationService.createNotification({

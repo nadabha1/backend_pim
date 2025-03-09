@@ -89,6 +89,7 @@ async getUserConversationsname(userId: string) {
         recipientId: otherUserId,
         type: NotificationType.MESSAGE,
         content: `Vous avez une nouvelle conversation avec ${sender.name}.`, // 🟢 Utiliser le nom ici
+        data: { conversationId: conversation._id.toString() } // 🟢 Inclure l’ID de la conversation
       });
     }
   
