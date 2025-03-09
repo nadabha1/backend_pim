@@ -48,7 +48,7 @@ unlockedCarnets: string[]; // Liste des ID des carnets débloqués
 @Prop({ type: [String], default: [] }) 
 unlockedPlaces: string[]; 
 @Prop({ type: Types.ObjectId, ref: 'Preference', default: null }) 
-preferences: Preference;
+preferences: Types.ObjectId | null;
 @Prop({ type: Boolean, default: false })  
 isVerified: boolean;
 @Prop({ type: [Types.ObjectId], ref: 'Place', default: [] })
