@@ -1,12 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import * as express from 'express';
+import { NestExpressApplication } from '@nestjs/platform-express'; // ✅ Importer NestExpressApplication
 import { join } from 'path';
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
 
-  await app.listen(3000, '0.0.0.0');
+async function bootstrap() {
+  //  Spécifier NestExpressApplication pour éviter l'erreur
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  //  Active CORS pour les appels API (ex: depuis iOS)
+  app.enableCors();
 
   app.enableCors({
     origin: '*',  // ✅ Autoriser toutes les origines pour les tests
@@ -15,5 +17,11 @@ async function bootstrap() {
   });
   
   
+  // Servir les fichiers statiques depuis le dossier 'uploads'
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads',
+  });
+
+  await app.listen(3000, '0.0.0.0'); // Écoute sur toutes les interfaces
 }
 bootstrap();

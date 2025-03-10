@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, UseInterceptors, UploadedFile, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, UseInterceptors, UploadedFile, BadRequestException,NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { User } from './entities/user.entity';
@@ -30,12 +30,37 @@ export class UsersController {
     }
     return this.usersService.create(user);
   }*/
-    async register(@Body() body: { user: Partial<User>; preferences: Partial<Preference> }): Promise<User> {
+    @Post('register')
+  async register(@Body() body: { user: Partial<User>; preferences: Partial<Preference> }): Promise<User> {
+    try {
       if (!body.user || !body.user.password) {
-        throw new Error("User data is missing or incomplete");
+        throw new BadRequestException('Invalid user data. Password is required.');
       }
-      return this.usersService.create(body.user, body.preferences);
+      const newUser = await this.usersService.create(body.user, body.preferences);
+      return newUser;
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('An error occurred while registering the user.');
     }
+  }
+
+  
+  @Post(':userId/preferences')
+  async addUserPreferences(@Param('userId') userId: string, @Body() preferences: Partial<Preference>): Promise<Preference> {
+    return this.usersService.addUserPreferences(userId, preferences);
+  }
+
+  @Get(':userId/preferences')
+  async getUserPreferencesById(@Param('userId') userId: string): Promise<Preference> {
+    return this.usersService.getUserPreferencesById(userId);
+  }
+
+  @Put(':userId/preferences')
+  async updateUserPreferences(@Param('userId') userId: string, @Body() preferences: Partial<Preference>): Promise<Preference> {
+    return this.usersService.updateUserPreferences(userId, preferences);
+  }
 
   @Get('all')  
   async getAllUsers(): Promise<User[]> {

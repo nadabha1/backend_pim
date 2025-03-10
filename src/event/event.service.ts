@@ -2,12 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Types } from 'mongoose';
-import { Event, EventDocument } from './entities/event.entity';
+import { Event, EventDocument, EventType } from './entities/event.entity';
 import { User, UserDocument } from 'src/users/entities/user.entity';
 import { ConversationService } from 'src/conversation/conversation.service';
 import { NotificationGateway } from 'src/notification/socket.gateway';
 import { NotificationType } from 'src/notification/entities/notification.entity';
 import { UsersService } from 'src/users/users.service';
+import { Preference,PreferenceDocument } from 'src/preferences/entities/preference.entity';
  // Adjust path as needed
 
 @Injectable()
@@ -19,9 +20,18 @@ export class EventService {
     private conversationService: ConversationService, // Adjust path as needed
     private readonly socketGateway: NotificationGateway, // ✅ Injection du WebSocket Gateway
     
-  ) {}
+    @InjectModel(Preference.name) private preferenceModel: Model<PreferenceDocument>,
 
-  async createEvent(creatorId: string, title: string, description: string, date: Date, location: string, joinPrice: number = 5) {
+  ) {}
+  async createEvent(
+    creatorId: string,
+    title: string,
+    description: string,
+    date: Date,
+    location: string,
+    joinPrice: number = 5,
+    type: EventType
+  ) {
     const creatorObjectId = Types.ObjectId.createFromHexString(creatorId);
 
     const conversation =await this.conversationService.createConversationGroup({
@@ -31,24 +41,25 @@ export class EventService {
 
 
     // Create the event with creator as a participant
+  
     const event = new this.eventModel({
       creatorId: creatorObjectId,
       title,
       description,
       date,
       location,
-      participants: [creatorObjectId], // Creator is automatically a participant
+      participants: [creatorObjectId],
       joinPrice,
       conversationId: conversation._id,  // ➡️ Associe l'ID de la conversation ici
+      type, // ✅ Save event type
     });
-
-    // Save the event first to get the event ID
+  
     const savedEvent = await event.save();
-
-    // Reward the creator with 10 coins
+  
+    // Reward creator with 10 coins
     const user = await this.userModel.findById(creatorObjectId);
     if (user) {
-      user.coins = (user.coins || 0) + 10; // Add 10 coins
+      user.coins = (user.coins || 0) + 10;
       await user.save();
     } else {
       throw new Error('Creator not found');
@@ -184,5 +195,36 @@ async findAllEvents() {
   
     return { message: 'Event deleted successfully' };
   }
+  
+  async findSpecificEvents(userId: string): Promise<Event[]> {
+
+    // Fetch the user's preferences
+    console.log("Searching for preferences with userId:", userId);
+
+    const userPreferences = await this.preferenceModel.findOne({ user: userId });
+
+    
+    console.log("Fetched user preferences:", userPreferences);
+    
+  
+    if (!userPreferences) {
+      throw new Error('User preferences not found');
+    }
+  
+    // Ensure the user has event preferences
+    const preferredEventTypes = userPreferences.eventPreferences || [];
+  
+    if (preferredEventTypes.length === 0) {
+      // If no preferences, return an empty list (or return all events as a fallback)
+      return [];
+    }
+  
+    // Find events where the type matches one of the preferred event types
+    return await this.eventModel
+      .find({ type: { $in: preferredEventTypes } })
+      .populate('participants')
+      .exec();
+  }
+  
   
 }

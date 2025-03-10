@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
@@ -28,33 +28,25 @@ export class UsersService {
             throw new BadRequestException('Invalid user data. Password is required.');
         }
 
-        // ✅ Hash password
         const hashedPassword = await bcrypt.hash(user.password, 10);
-        const newUser = new this.userModel({ 
-            ...user, 
-            password: hashedPassword, 
-            isVerified: false,  // User must verify their email
+        const newUser = new this.userModel({
+            ...user,
+            password: hashedPassword,
+            isVerified: false,
         });
 
-        // ✅ Save user first before accessing _id
         const savedUser = await newUser.save();
         console.log("🟢 User successfully saved:", savedUser);
         console.log("🟢 Generated User ID:", savedUser._id);
-        // ✅ Save user preferences
-        if (preferences) {
-            const userPreferences = new this.preferenceModel({
-                user: savedUser._id,  // Use savedUser._id after save()
-                ...preferences,
-            });
-            await userPreferences.save();
-        }
 
-        // ✅ Send Verification Email after saving
+        await savedUser.save();
+        console.log("✅ Preferences linked to User:", savedUser._id);
+
         await this.sendVerificationEmail(savedUser.email, savedUser._id.toString());
-
         return savedUser;
     } catch (error) {
-        throw new Error(`Error creating user: ${error.message}`);
+        console.error("❌ Error creating user:", error);
+        throw new InternalServerErrorException(`Error creating user: ${error.message}`);
     }
 }
 async findAllExceptCreator(creatorId: string) {
@@ -130,11 +122,35 @@ async sendVerificationEmail(email: string, userId: string): Promise<void> {
     return this.userModel.findById(id).populate('preferences').exec();
   }
 
-  /**
-   * ✅ Get User Preferences
-   */
-  async getUserPreferences(userId: string): Promise<Preference | null> {
-    return this.preferenceModel.findOne({ user: userId }).exec();
+  async addUserPreferences(userId: string, preferences: Partial<Preference>): Promise<Preference> {
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+  
+    const existingPreferences = await this.preferenceModel.findOne({ user: userId });
+    if (existingPreferences) {
+      throw new BadRequestException('Preferences already exist for this user');
+    }
+  
+    const newPreferences = new this.preferenceModel({
+      user: userId,
+      ...preferences,
+    });
+  
+    const savedPreferences = await newPreferences.save();
+    user.preferences = new Types.ObjectId(savedPreferences._id.toString());
+    await user.save();
+  
+    return savedPreferences;
+  }
+  
+  async getUserPreferencesById(userId: string): Promise<Preference> {
+    const preferences = await this.preferenceModel.findOne({ user: userId }).exec();
+    if (!preferences) {
+      throw new NotFoundException('Preferences not found for this user');
+    }
+    return preferences;
   }
 
   /**
@@ -147,8 +163,18 @@ async sendVerificationEmail(email: string, userId: string): Promise<void> {
   /**
    * ✅ Update user preferences
    */
-  async updatePreferences(userId: string, preferences: Partial<Preference>): Promise<Preference> {
-    return this.preferenceModel.findOneAndUpdate({ user: userId }, preferences, { new: true }).exec();
+  async updateUserPreferences(userId: string, preferences: Partial<Preference>): Promise<Preference> {
+    const updatedPreferences = await this.preferenceModel.findOneAndUpdate(
+      { user: userId },
+      { $set: preferences },
+      { new: true }
+    ).exec();
+
+    if (!updatedPreferences) {
+      throw new NotFoundException('Preferences not found for this user');
+    }
+
+    return updatedPreferences;
   }
 
   /**
