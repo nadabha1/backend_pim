@@ -24,7 +24,7 @@ export class AIService {
   }
 
   // ➤ Recommandations basées sur tous les carnets sans filtrer par unlockedCarnets
-  async getPersonalizedRecommendations(userId: string): Promise<string[]> {
+ /* async getPersonalizedRecommendations(userId: string): Promise<string[]> {
     console.log("===== Début de getPersonalizedRecommendations =====");
     console.log("User ID:", userId);
 
@@ -99,5 +99,5 @@ Peux-tu me proposer des recommandations personnalisées basées sur ces informat
 
     console.log("===== Fin de getPersonalizedRecommendations =====");
     return recommendations;
-  }
+  }*/
 }
