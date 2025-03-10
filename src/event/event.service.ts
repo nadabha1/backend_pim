@@ -5,6 +5,9 @@ import { Types } from 'mongoose';
 import { Event, EventDocument } from './entities/event.entity';
 import { User, UserDocument } from 'src/users/entities/user.entity';
 import { ConversationService } from 'src/conversation/conversation.service';
+import { NotificationGateway } from 'src/notification/socket.gateway';
+import { NotificationType } from 'src/notification/entities/notification.entity';
+import { UsersService } from 'src/users/users.service';
  // Adjust path as needed
 
 @Injectable()
@@ -12,7 +15,10 @@ export class EventService {
   constructor(
     @InjectModel(Event.name) private eventModel: Model<EventDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    private readonly userService: UsersService,  // 🟢 Injecter UserService
     private conversationService: ConversationService, // Adjust path as needed
+    private readonly socketGateway: NotificationGateway, // ✅ Injection du WebSocket Gateway
+    
   ) {}
 
   async createEvent(creatorId: string, title: string, description: string, date: Date, location: string, joinPrice: number = 5) {
@@ -22,6 +28,7 @@ export class EventService {
       participants: creatorId,
       title: title,  // Utiliser le titre de l'événement comme nom du groupe
     });
+
 
     // Create the event with creator as a participant
     const event = new this.eventModel({
@@ -46,11 +53,45 @@ export class EventService {
     } else {
       throw new Error('Creator not found');
     }
+    this.socketGateway.sendNotification({
+      senderId: creatorId,
+      recipientId: creatorId,
+      type: NotificationType.NEW_Event,
+      content: `Votre événement "${title}" a été créé avec succès.`,
+      data: { eventId: savedEvent._id.toString() },
+    });
 
+    const allUsersExceptCreator = await this.userService.findAllExceptCreator(creatorId);
 
+    // 🟢 Envoyer `NEW_EVENT_All` à tous les autres utilisateurs
+    for (const user of allUsersExceptCreator) {
+      this.socketGateway.sendNotification({
+        senderId: creatorId,
+        recipientId: user._id.toString(),
+        type: NotificationType.NEW_EVENT_All,
+        content: `Un nouvel événement "${title}" a été créé. Découvrez-le vite !`,
+        data: { eventId: savedEvent._id.toString() },
+      });
+
+    }
+
+  
     return savedEvent;
   }
+  async findOne(id: string) {
+    return await this.eventModel.findById(id).populate('participants').exec();
+  }
+// event.service.ts
 
+async isUserJoined(eventId: string, userId: string): Promise<boolean> {
+  const event = await this.eventModel.findById(eventId);
+  if (!event) throw new Error('Event not found');
+
+  // ✅ Convertir userId en ObjectId avant de vérifier
+  const userObjectId = new Types.ObjectId(userId);
+  
+  return event.participants.includes(userObjectId);
+}
   async findAll(userId: string) {
     return await this.eventModel
       .find({

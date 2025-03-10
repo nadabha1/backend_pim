@@ -57,7 +57,9 @@ export class UsersService {
         throw new Error(`Error creating user: ${error.message}`);
     }
 }
-
+async findAllExceptCreator(creatorId: string) {
+  return await this.userModel.find({ _id: { $ne: creatorId } });
+}
 
 async sendVerificationEmail(email: string, userId: string): Promise<void> {
   console.log(`🟢 Preparing to send email to: ${email}, User ID: ${userId}`);

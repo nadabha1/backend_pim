@@ -3,11 +3,15 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Follow, FollowDocument } from './entities/follow.entity';
 import { User, UserDocument } from 'src/users/entities/user.entity';
+import { NotificationGateway } from 'src/notification/socket.gateway';
+import { NotificationType } from 'src/notification/entities/notification.entity';
 
 @Injectable()
 export class FollowService {
   constructor( @InjectModel(User.name) private userModel: Model<UserDocument> ,
-  @InjectModel(Follow.name) private followModel: Model<FollowDocument>) {}
+  @InjectModel(Follow.name) private followModel: Model<FollowDocument>,
+    private readonly socketGateway: NotificationGateway, // ✅ Injection du WebSocket Gateway
+) {}
 
   // 🔹 Follow a user
   async followUser(followerId: string, followingId: string): Promise<any> {
@@ -22,6 +26,13 @@ export class FollowService {
   
     const newFollow = new this.followModel({ follower: followerId, following: followingId });
     await newFollow.save();
+    this.socketGateway.sendNotification({
+            senderId: followerId,
+            recipientId: followingId.toString(),
+            type: NotificationType.FOLLOW,
+            content: 'Vous avez un nouveau follower!',
+            data: { followerId: followerId.toString() },
+          });
     return { message: 'Follow successful' };
   }
   

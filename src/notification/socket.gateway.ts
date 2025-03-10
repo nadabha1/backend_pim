@@ -36,6 +36,7 @@ export class NotificationGateway {
       recipient: recipientId,
       type: type as any,
       message: content,
+      data, // ��� Inclure les données supplémentaires dans la notification
     });
 
     this.server.to(recipientId).emit('newNotification', notification);

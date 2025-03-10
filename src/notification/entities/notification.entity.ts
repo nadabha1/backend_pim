@@ -4,7 +4,10 @@ import { Document, Types } from 'mongoose';
 export enum NotificationType {
   INVITATION = 'INVITATION',
   NEW_PLACE = 'NEW_PLACE',
+  NEW_Event = 'NEW_Event',  
+  NEW_EVENT_All = 'NEW_EVENT_All',  
   MESSAGE = 'MESSAGE',
+  FOLLOW= 'FOLLOW',
 }
 
 export enum NotificationCategory {

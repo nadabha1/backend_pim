@@ -4,6 +4,15 @@ import { EventService } from './event.service';
 @Controller('events')
 export class EventController {
   constructor(private readonly eventService: EventService) {}
+// Vérifier si l'utilisateur est inscrit à l'événement
+@Get(':eventId/joined/:userId')
+async isUserJoined(
+  @Param('eventId') eventId: string,
+  @Param('userId') userId: string,
+) {
+  const isJoined = await this.eventService.isUserJoined(eventId, userId);
+  return { joined: isJoined };
+}
 
   @Post()
   async create(@Body() body: { creatorId: string; title: string; description: string; date: string; location: string; joinPrice?: number }) {
@@ -17,6 +26,15 @@ export class EventController {
     );
     return event;
   }
+  @Get(':id')
+async findOne(@Param('id') id: string) {
+  if (id === 'all') {
+    return await this.eventService.findAllEvents();  // ✅ Appeler `findAll` si `id` est `all`
+  } else {
+    return await this.eventService.findOne(id);  // ✅ Sinon, appeler `findOne`
+  }
+}
+
 
   @Get()
   async findAlluser(@Query('userId') userId: string) {
