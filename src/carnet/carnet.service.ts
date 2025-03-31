@@ -20,6 +20,7 @@ async addPlace(carnetId: string, placeData: any): Promise<Carnet> {
   console.log(`Place Data Received:`, placeData);
 
   carnet.places.push(placeData);
+  
   return await carnet.save();
 }
 

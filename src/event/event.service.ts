@@ -90,7 +90,13 @@ export class EventService {
     return savedEvent;
   }
   async findOne(id: string) {
-    return await this.eventModel.findById(id).populate('participants').exec();
+    const events = await this.eventModel.findById(id)
+    .populate({
+      path: 'participants', 
+      model:'User',
+      select: '_id name' // Ajoute avatarUrl pour éviter le crash
+    })    .exec();
+    
   }
 // event.service.ts
 
@@ -111,20 +117,30 @@ async isUserJoined(eventId: string, userId: string): Promise<boolean> {
           { participants: Types.ObjectId.createFromHexString(userId) },
         ],
       })
-      .populate('participants')
+      .populate('participants', 'name') // côté Node.js + Mongoose
       .exec();
   }
 
  // event.service.ts
-async findAllEvents() {
+ async findAllEvents() {
   const events = await this.eventModel
     .find()
-    .populate('participants')
-    .exec();
-  
-  console.log("📢 Events trouvés:", events);  // ➡️ LOG pour vérifier
-  return events;
+    .populate({
+      path: 'participants', 
+      model:'User',
+
+      select: '_id name' // Ajoute avatarUrl pour éviter le crash
+    })
+  const result = events.map(event => ({
+    ...event.toObject(), // 👈 Convertit à un objet simple
+    participantNames: event.participants.map(
+      (p: any) => p.name // 👉 On peut accéder à p.name car c’est un objet mongoose
+    ),
+  }));
+
+  return result;
 }
+
 
   async joinEvent(eventId: string, userId: string) {
     const eventObjectId = Types.ObjectId.createFromHexString(eventId);
@@ -220,10 +236,22 @@ async findAllEvents() {
     }
   
     // Find events where the type matches one of the preferred event types
-    return await this.eventModel
+    const event= await this.eventModel
       .find({ type: { $in: preferredEventTypes } })
-      .populate('participants')
-      .exec();
+      .populate({
+        path: 'participants', 
+        model:'User',
+  
+        select: '_id name' // Ajoute avatarUrl pour éviter le crash
+      }).exec();
+      const result = event.map(event => ({
+        ...event.toObject(), // 👈 Convertit à un objet simple
+        participantNames: event.participants.map(
+          (p: any) => p.name // 👉 On peut accéder à p.name car c’est un objet mongoose
+        ),
+      }));
+    
+      return result;
   }
   
   

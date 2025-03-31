@@ -8,6 +8,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { CarnetService } from 'src/carnet/carnet.service';
 import { PreferencesModule } from 'src/preferences/preferences.module';
 import { Types } from 'mongoose';
+import { PreferencesService } from 'src/preferences/preferences.service';
 
 @Injectable()
 export class UsersService {
@@ -16,6 +17,7 @@ export class UsersService {
     @InjectModel(Preference.name) private preferenceModel: Model<Preference>,
     private readonly mailerService: MailerService,
     private readonly carnetService: CarnetService, 
+    private readonly preferenceService: PreferencesService,  // Adjust path as needed
 
   ) {}
 
@@ -61,7 +63,7 @@ async sendVerificationEmail(email: string, userId: string): Promise<void> {
       throw new Error("userId is undefined in sendVerificationEmail");
   }
 
-  const verificationLink = `http://172.16.4.223:3000/auth/confirm/${userId}`;
+  const verificationLink = `http://192.168.1.23:3000/auth/confirm/${userId}`;
   console.log(`🟢 Generated Verification Link: ${verificationLink}`);
 
   try {
@@ -127,6 +129,7 @@ async sendVerificationEmail(email: string, userId: string): Promise<void> {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+
   
     const existingPreferences = await this.preferenceModel.findOne({ user: userId });
     if (existingPreferences) {
@@ -142,7 +145,8 @@ async sendVerificationEmail(email: string, userId: string): Promise<void> {
     user.preferences = new Types.ObjectId(savedPreferences._id.toString());
     await user.save();
   
-    return savedPreferences;
+     await this.preferenceService.generateTagsFromPreferences(userId);
+     return savedPreferences;
   }
   
   async getUserPreferencesById(userId: string): Promise<Preference> {
