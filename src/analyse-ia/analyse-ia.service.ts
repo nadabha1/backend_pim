@@ -8,7 +8,7 @@ import { UserActivity, UserActivityDocument } from './entities/user-activity.ent
 
 @Injectable()
 export class AnalyseIaService {
-  private apiKey = 'sk-...'; // Ta clé GPT ici
+   private apiKey = "sk-Xh3kl2eRQ4IiRKVFNpZWm3OyX4mmvxARpupdoErE0Xfklfwb";
 
   constructor(
     @InjectModel(UserActivity.name) private activityModel: Model<UserActivityDocument>,
