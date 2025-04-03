@@ -2,14 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Review, ReviewDocument } from './entities/review.entity';
-import { Carnet, CarnetDocument, Place } from 'src/carnet/entities/carnet.entity'; 
+import { Carnet, CarnetDocument, Place } from 'src/carnet/entities/carnet.entity';
 import { User, UserDocument } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class ReviewService {
   constructor(
     @InjectModel(Review.name) private reviewModel: Model<ReviewDocument>,
-    @InjectModel(Carnet.name) private carnetModel: Model<CarnetDocument>, 
+    @InjectModel(Carnet.name) private carnetModel: Model<CarnetDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) {}
 
@@ -29,8 +29,8 @@ export class ReviewService {
 
     console.log('Review added:', review);
 
-    // Mettre à jour la moyenne des notes du lieu
-    await this.updatePlaceRating(placeId); 
+    // Mettre à jour la moyenne des notes du lieu et du carnet
+    await this.updatePlaceRating(placeId);
 
     // Récompenser l'utilisateur avec 2 coins
     try {
@@ -38,7 +38,7 @@ export class ReviewService {
       if (!user) {
         throw new Error('User not found');
       }
-      user.coins += 2; 
+      user.coins += 2;
       await user.save();
       console.log(`User ${userId} rewarded with 2 coins. New balance: ${user.coins}`);
     } catch (error) {
@@ -52,12 +52,11 @@ export class ReviewService {
   async calculateAverageRating(placeId: string): Promise<number> {
     console.log(`Calculating average rating for placeId: ${placeId}`);
 
-    // Récupérer tous les avis pour ce lieu
     const reviews = await this.reviewModel.find({ placeId });
 
     console.log(`Fetched ${reviews.length} reviews for placeId: ${placeId}`);
 
-    if (reviews.length === 0) return 0; 
+    if (reviews.length === 0) return 0;
 
     const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
     const averageRating = totalRating / reviews.length;
@@ -67,7 +66,7 @@ export class ReviewService {
     return averageRating;
   }
 
-  // Mettre à jour la moyenne de notation d'un lieu
+  // Mettre à jour la moyenne de notation d'un lieu et du carnet
   async updatePlaceRating(placeId: string) {
     console.log(`Updating average rating for placeId: ${placeId}`);
 
@@ -86,16 +85,32 @@ export class ReviewService {
       return;
     }
 
-    // Calculer la nouvelle moyenne des avis
+    // Calculer la nouvelle moyenne des avis pour la place
     const averageRating = await this.calculateAverageRating(placeId);
 
     // Mettre à jour la place avec la nouvelle moyenne
     carnet.places[placeIndex].averageRating = averageRating;
 
+    // Mettre à jour la moyenne globale du carnet
+    carnet.globalAverageRating = this.calculateGlobalAverageRating(carnet);
+
     // Sauvegarder le carnet mis à jour
     await carnet.save();
 
     console.log(`✅ Place ${placeId} updated with new average rating: ${averageRating}`);
+    console.log(`✅ Carnet ${carnet._id} updated with new global average rating: ${carnet.globalAverageRating}`);
+  }
+
+  // Calculer la moyenne globale des ratings d’un carnet
+  calculateGlobalAverageRating(carnet: CarnetDocument): number {
+    if (!carnet.places || carnet.places.length === 0) return 0;
+
+    const totalRating = carnet.places.reduce((sum, place) => sum + place.averageRating, 0);
+    const globalAverage = totalRating / carnet.places.length;
+
+    console.log(`Calculated global average rating for carnet ${carnet._id}: ${globalAverage}`);
+
+    return globalAverage;
   }
 
   // Obtenir tous les avis pour un lieu
