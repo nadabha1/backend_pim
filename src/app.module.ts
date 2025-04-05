@@ -19,6 +19,8 @@ import { ConversationModule } from './conversation/conversation.module';
 import { EventModule } from './event/event.module';
 import { ChatGateway } from './chat/chat.gateway';
 import { ChatModule } from './chat/chat.module';
+import { FreeTimeModule } from './free-times/free-times.module';
+import { UserEventModule } from './user-event/user-event.module';
 
 @Module({
   imports: [
@@ -59,6 +61,8 @@ import { ChatModule } from './chat/chat.module';
     ConversationModule,
     EventModule,
     ChatModule,
+    FreeTimeModule,
+    UserEventModule,
     
   ],  controllers: [AppController],
   providers: [AppService,ChatGateway],
