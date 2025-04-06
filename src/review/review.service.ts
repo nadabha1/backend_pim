@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Review, ReviewDocument } from './entities/review.entity';
@@ -20,7 +20,7 @@ export class ReviewService {
     // Vérifier si l'utilisateur a déjà laissé un avis
     const existingReview = await this.reviewModel.findOne({ placeId, userId });
     if (existingReview) {
-      throw new Error('User has already reviewed this place');
+      throw new BadRequestException('User has already reviewed this place');
     }
 
     // Créer et sauvegarder l'avis
@@ -120,4 +120,19 @@ export class ReviewService {
     console.log(`Reviews found: ${reviews.length}`, reviews);
     return reviews;
   }
+
+  // Obtenir la note moyenne d’un lieu
+async getAverageRating(placeId: string): Promise<number> {
+  return this.calculateAverageRating(placeId);
+}
+
+// Obtenir la note globale d’un carnet
+async getGlobalAverageRating(carnetId: string): Promise<number> {
+  const carnet = await this.carnetModel.findById(carnetId);
+  if (!carnet) {
+    throw new NotFoundException('Carnet not found');
+  }
+  return this.calculateGlobalAverageRating(carnet);
+}
+
 }

@@ -17,4 +17,14 @@ export class ReviewController {
   async getReviews(@Param('placeId') placeId: string) {
     return this.reviewService.getReviews(placeId);
   }
+  @Get(':placeId/average-rating')
+async getAverageRating(@Param('placeId') placeId: string) {
+  return this.reviewService.getAverageRating(placeId);
+}
+
+@Get('/carnet/:carnetId/global-average-rating')
+async getGlobalAverageRating(@Param('carnetId') carnetId: string) {
+  return this.reviewService.getGlobalAverageRating(carnetId);
+}
+
 }
