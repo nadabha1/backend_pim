@@ -9,7 +9,7 @@ import { NotificationGateway } from 'src/notification/socket.gateway';
 import { NotificationType } from 'src/notification/entities/notification.entity';
 import { UsersService } from 'src/users/users.service';
 import { Preference,PreferenceDocument } from 'src/preferences/entities/preference.entity';
- // Adjust path as needed
+import { FreeTimeService } from 'src/free-times/free-times.service';
 
 @Injectable()
 export class EventService {
@@ -19,18 +19,20 @@ export class EventService {
     private readonly userService: UsersService,  // 🟢 Injecter UserService
     private conversationService: ConversationService, // Adjust path as needed
     private readonly socketGateway: NotificationGateway, // ✅ Injection du WebSocket Gateway
-    
+    private readonly freeTimeService: FreeTimeService,
+
     @InjectModel(Preference.name) private preferenceModel: Model<PreferenceDocument>,
 
   ) {}
   async createEvent(
     creatorId: string,
-    title: string,
-    description: string,
-    date: Date,
-    location: string,
-    joinPrice: number = 5,
-    type: EventType
+  title: string,
+  description: string,
+  startDate: string,
+  endDate: string,
+  location: string,
+  joinPrice: number = 5,
+  type: EventType
   ) {
     const creatorObjectId = Types.ObjectId.createFromHexString(creatorId);
 
@@ -44,14 +46,15 @@ export class EventService {
   
     const event = new this.eventModel({
       creatorId: creatorObjectId,
-      title,
-      description,
-      date,
-      location,
-      participants: [creatorObjectId],
-      joinPrice,
-      conversationId: conversation._id,  // ➡️ Associe l'ID de la conversation ici
-      type, // ✅ Save event type
+    title,
+    description,
+    startDate: new Date(startDate), // Parse ISO string to Date
+    endDate: new Date(endDate),     // Parse ISO string to Date
+    location,
+    participants: [creatorObjectId],
+    joinPrice,
+    conversationId: conversation._id,
+    type,// ✅ Save event type
     });
   
     const savedEvent = await event.save();
@@ -175,7 +178,8 @@ async isUserJoined(eventId: string, userId: string): Promise<boolean> {
   async getEventsByUser(userId: string) {
     return this.eventModel.find({ where: { creatorId: userId } });
   }
-  async updateEvent(eventId: string, updateData: { title?: string; description?: string; date?: string; location?: string; joinPrice?: number }) {
+  async updateEvent(eventId: string, updateData: { title?: string; description?: string; startDate?: string;
+    endDate?: string; location?: string; joinPrice?: number }) {
     const eventObjectId = Types.ObjectId.createFromHexString(eventId);
     const event = await this.eventModel.findById(eventObjectId);
     
@@ -184,8 +188,8 @@ async isUserJoined(eventId: string, userId: string): Promise<boolean> {
     // Update fields that are provided
     if (updateData.title) event.title = updateData.title;
     if (updateData.description) event.description = updateData.description;
-    if (updateData.date) event.date = new Date(updateData.date);
-    if (updateData.location) event.location = updateData.location;
+    if (updateData.startDate) event.startDate = new Date(updateData.startDate);
+    if (updateData.endDate) event.endDate = new Date(updateData.endDate);    if (updateData.location) event.location = updateData.location;
     if (updateData.joinPrice !== undefined) event.joinPrice = updateData.joinPrice;
 
     await event.save();
@@ -252,6 +256,47 @@ async isUserJoined(eventId: string, userId: string): Promise<boolean> {
       }));
     
       return result;
+  }
+  async findEventsDuringUserFreeTime(userId: string): Promise<Event[]> {
+    const freeTimes = await this.freeTimeService.getFreeTimeByUser(userId);
+    if (!freeTimes || freeTimes.length === 0) return [];
+  
+    // Construct query to find events during the free slots
+    const orConditions = freeTimes.map(({ start, end }) => ({
+      $or: [
+        { startDate: { $gte: new Date(start) } },  // Event starts after or at the free time start
+        { endDate: { $lte: new Date(end) } },      // Event ends before or at the free time end
+      ]
+    }));
+  
+    return this.eventModel.find({ $or: orConditions }).exec();
+  }
+  async findNonConflictingEvents(userId: Types.ObjectId): Promise<Event[]> {
+    // 1. Fetch all events associated with the user
+    const userEvents = await this.eventModel
+      .find({
+        $or: [
+          { creatorId: userId },
+          { participants: userId },
+        ],
+      })
+      .exec();
+  
+    // 2. Extract conflicting event IDs
+    const conflictingEventIds = userEvents.map(event => event._id);
+  
+    // 3. Find non-conflicting events
+    const nonConflictingEvents = await this.eventModel
+      .find({
+        _id: { $nin: conflictingEventIds },
+        $or: [
+          { startDate: { $gte: new Date() } }, // Events starting in the future
+          { endDate: { $gte: new Date() } },  // Events ending in the future
+        ],
+      })
+      .exec();
+  
+    return nonConflictingEvents;
   }
   
   

@@ -330,6 +330,18 @@ async getPlacesByCategories(categories: string[]): Promise<Place[]> {
     place.categories.some(category => categories.includes(category))
   );
 }
+async updateGlobalRating(carnetId: string) {
+  const carnet = await this.carnetModel.findById(carnetId).populate('places').exec();
+  if (!carnet) {
+    throw new Error('Carnet not found');
+  }
 
+  const totalRatings = carnet.places.reduce((sum, place) => sum + place.averageRating, 0);
+  const globalAverageRating = carnet.places.length > 0 ? totalRatings / carnet.places.length : 0;
+
+  // Mettre à jour la note globale du carnet
+  carnet.globalAverageRating = globalAverageRating;
+  await carnet.save();
+}
 
 }

@@ -6,10 +6,14 @@ import { Event,EventSchema } from './entities/event.entity';
 import { UsersModule } from 'src/users/users.module';
 import { ConversationModule } from 'src/conversation/conversation.module';
 import { NotificationModule } from 'src/notification/notification.module';
+import { FreeTime, FreeTimeSchema } from 'src/free-times/entities/free-time.entity';
+import { FreeTimeModule } from 'src/free-times/free-times.module';
 // import { UsersModule } from './users/users.module';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: Event.name, schema: EventSchema }]),
+  imports: [MongooseModule.forFeature([{ name: Event.name, schema: EventSchema }, 
+  ]),
+  FreeTimeModule,
   UsersModule,ConversationModule,    
   forwardRef(() => NotificationModule),  // ✅ Utiliser forwardRef
   ],
