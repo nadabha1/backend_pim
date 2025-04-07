@@ -20,7 +20,7 @@ export class Preference extends Document {
   @Prop({ required: false, enum: ['Solo Activities', 'Small Groups', 'Large Gatherings'] })
   socialPreference?: string;
   
-  @Prop({ required: false, enum: ['Morning', 'Afternoon', 'Evening', 'No Preference'] })
+  @Prop({ required: false, enum: ['Morning', 'Afternoon', 'Evening', 'No Preference', 'Late Night'] })
   preferredEventTime?: string;
   
 }

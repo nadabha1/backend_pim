@@ -19,8 +19,8 @@ import { ConversationModule } from './conversation/conversation.module';
 import { EventModule } from './event/event.module';
 import { ChatGateway } from './chat/chat.gateway';
 import { ChatModule } from './chat/chat.module';
-import { FreeTimeModule } from './free-times/free-times.module';
-import { UserEventModule } from './user-event/user-event.module';
+import { AiModule } from './ai/ai.module';
+import { AnalyseIaModule } from './analyse-ia/analyse-ia.module';
 
 @Module({
   imports: [
@@ -61,8 +61,8 @@ import { UserEventModule } from './user-event/user-event.module';
     ConversationModule,
     EventModule,
     ChatModule,
-    FreeTimeModule,
-    UserEventModule,
+    AiModule,
+    AnalyseIaModule
     
   ],  controllers: [AppController],
   providers: [AppService,ChatGateway],

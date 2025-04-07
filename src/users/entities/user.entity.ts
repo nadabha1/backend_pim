@@ -56,6 +56,12 @@ isVerified: boolean;
 favorites: Types.Array<Types.ObjectId>;  // Ajoutez cette ligne pour les places favorites
 @Prop({ type: [String], default: [] }) 
 interactions: string[];
+@Prop({ type: [String], default: [] })
+searchHistory: string[]; // ex : ["café", "plage", "shopping"]
+
+@Prop({ type: [String], default: [] })
+tags: string[];
+
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
