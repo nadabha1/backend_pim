@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import mongoose, { Model, Types } from 'mongoose';
 import { Conversation } from './entities/conversation.entity';
 import { NotificationService } from 'src/notification/notification.service';
 import { NotificationGateway } from 'src/notification/socket.gateway';
@@ -27,23 +27,24 @@ async getUserConversationsname(userId: string) {
   console.log("Conversations trouvées:", JSON.stringify(conversations, null, 2)); // 🔍 Log pour debug
   return conversations;
 }
-  async getUserConversations(userId: string) {
-    const conversations = await this.conversationModel
-      .find({ participants: userId })
-      .populate({
-        path: 'participants', 
-        model:'User',
-        select: 'name' // Ajoute avatarUrl pour éviter le crash
-      })
-      .populate({
-        path: 'lastMessage',
-        select: 'content createdAt'
-      })
-      .exec();
-  
-    console.log("Conversations trouvées:", JSON.stringify(conversations, null, 2)); // 🔍 Log pour debug
-    return conversations;
-  }
+async getUserConversations(userId: string) {
+  const conversations = await this.conversationModel
+    .find({ participants: { $in: [userId] } }) // Recherche les conversations où userId est un participant
+    .populate({
+      path: 'participants', 
+      model: 'User',
+      select: 'name ' // Sélectionne les informations nécessaires pour les participants
+    })
+    .populate({
+      path: 'lastMessage',
+      select: 'content createdAt'
+    })
+    .exec();
+
+  console.log("Conversations trouvées:", JSON.stringify(conversations, null, 2)); // Log pour debug
+  return conversations;
+}
+
   
   async createConversation(participants: string[]) {
     const conversation = await this.conversationModel.create({ participants });
@@ -95,7 +96,6 @@ async getUserConversationsname(userId: string) {
   
     return conversation;
   }
-  
   async createConversation2(userId: string, otherUserId: string) {
     const existingConversation = await this.conversationModel.findOne({
       participants: { $all: [userId, otherUserId] }
@@ -120,6 +120,18 @@ async getUserConversationsname(userId: string) {
       
     return conversation;
   }
+  
+
+  async createConversationGroupnotevent(data: { participants: string[]; title: string }) {
+    const conversation = new this.conversationModel({
+      participants: data.participants, // Utiliser directement les strings pour les participants
+      title: data.title,
+    });
+  
+    return await conversation.save();
+  }
+  
+  
   
   
 }
