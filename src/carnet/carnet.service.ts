@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Carnet, CarnetDocument } from './entities/carnet.entity';
+import { Carnet, CarnetDocument, Place } from './entities/carnet.entity';
 import { User, UserDocument } from 'src/users/entities/user.entity';
 
 @Injectable()
@@ -20,6 +20,7 @@ async addPlace(carnetId: string, placeData: any): Promise<Carnet> {
   console.log(`Place Data Received:`, placeData);
 
   carnet.places.push(placeData);
+  
   return await carnet.save();
 }
 
@@ -302,6 +303,33 @@ async deletePlace(carnetId: string, placeId: string): Promise<Carnet> {
   return carnet;
 }
 
+ // Recherche des places dans un carnet par catégorie
+ async getPlacesByCategory(category: string): Promise<Place[]> {
+  const carnet = await this.carnetModel.findOne({
+    'places.categories': category, // Recherche de places avec la catégorie donnée
+  }).exec();
+  
+  if (!carnet) {
+    return []; // Si aucun carnet trouvé, retourner un tableau vide
+  }
+
+  return carnet.places.filter(place => place.categories.includes(category));
+}
+
+// Recherche des places dans un carnet par plusieurs catégories
+async getPlacesByCategories(categories: string[]): Promise<Place[]> {
+  const carnet = await this.carnetModel.findOne({
+    'places.categories': { $in: categories }, // Recherche des places qui ont l'une des catégories spécifiées
+  }).exec();
+
+  if (!carnet) {
+    return []; // Si aucun carnet trouvé, retourner un tableau vide
+  }
+
+  return carnet.places.filter(place => 
+    place.categories.some(category => categories.includes(category))
+  );
+}
 
 
 }

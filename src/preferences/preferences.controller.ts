@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Put } from '@nestjs/common';
 import { PreferencesService } from './preferences.service';
 import { CreatePreferenceDto } from './dto/create-preference.dto';
 import { UpdatePreferenceDto } from './dto/update-preference.dto';
@@ -9,9 +9,26 @@ export class PreferencesController {
 
   // Créer une nouvelle préférence
   @Post()
-  create(@Body() createPreferenceDto: CreatePreferenceDto) {
-    return this.preferencesService.create(createPreferenceDto);
+  async create(@Body() createPreferenceDto: CreatePreferenceDto) {
+    const preference = await this.preferencesService.create(createPreferenceDto);
+    console.log('Create preference ' + createPreferenceDto.user);
+    this.preferencesService.generateTagsFromPreferences(createPreferenceDto.user);
+    return preference;
   }
+  @Patch("/updatePref/:userId")
+  async up(@Param('userId') createPreferenceDto: string) {
+    return this.preferencesService.generateTagsFromPreferences(createPreferenceDto);
+  }
+
+  // GET /preferences/matching/:userId
+@Get('matching/:userId')
+async getMatchingUsers(@Param('userId') userId: string) {
+  const currentPrefs = await this.preferencesService.findByUserId(userId);
+
+  const users = await this.preferencesService.findMatchingUsers(currentPrefs);
+  return users;
+}
+
 
   // Récupérer toutes les préférences
   @Get()

@@ -14,6 +14,8 @@ export class Message extends Document {
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }] })
   seenBy: Types.ObjectId[];
+  createdAt: Date;  // createdAt will be automatically populated by Mongoose
+  updatedAt: Date;  
 }
 
 // Génération automatique du schéma Mongoose

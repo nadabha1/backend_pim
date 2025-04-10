@@ -38,6 +38,9 @@ export class Event {
   @Prop({ type: Number, default: 5 }) 
   joinPrice: number;
 
+  @Prop({ type: Types.ObjectId, ref: 'Conversation', required: true })  // ➡️ Ajoute cette ligne
+  conversationId: Types.ObjectId;  // ➡️ ID de la conversation associée
+
   // ✅ Add the event type enum
   @Prop({ required: true, enum: EventType, default: EventType.OTHER })
   type: EventType;

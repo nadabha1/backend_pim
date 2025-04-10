@@ -3,11 +3,16 @@ import { Document, Types } from 'mongoose';
 
 @Schema({ timestamps: true })
 export class Conversation extends Document {
+  @Prop({ type: String, required: false,default:'' })
+  title: string;  // ✅ Nom du groupe
+
   @Prop({ type: [{ type: Types.ObjectId, ref: 'User', required: true }] })
   participants: Types.ObjectId[];
 
   @Prop({ type: Types.ObjectId, ref: 'Message' })
   lastMessage: Types.ObjectId;
+  @Prop({ type: Date })
+  lastMessageDate: Date; // Store the date of the last message
 }
 
 // Génération automatique du schéma Mongoose

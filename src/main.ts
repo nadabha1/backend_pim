@@ -10,6 +10,13 @@ async function bootstrap() {
   //  Active CORS pour les appels API (ex: depuis iOS)
   app.enableCors();
 
+  app.enableCors({
+    origin: '*',  // ✅ Autoriser toutes les origines pour les tests
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: 'Content-Type, Accept',
+  });
+  
+  
   // Servir les fichiers statiques depuis le dossier 'uploads'
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads',

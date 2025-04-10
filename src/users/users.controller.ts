@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, UseInterceptors, UploadedFile, BadRequestException,NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, UseInterceptors, UploadedFile, BadRequestException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { User } from './entities/user.entity';
@@ -10,7 +10,7 @@ import { Preference } from 'src/preferences/entities/preference.entity';
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
- 
+
   @Post('register')
   @UseInterceptors(
     FileInterceptor('profilePicture', {
@@ -24,13 +24,6 @@ export class UsersController {
       }),
     }),
   )
-  /*async register(@Body() user: Partial<User>, @UploadedFile() file: Express.Multer.File): Promise<User> {
-    if (file) {
-      user.profileImage = `/uploads/${file.filename}`;
-    }
-    return this.usersService.create(user);
-  }*/
-    @Post('register')
   async register(@Body() body: { user: Partial<User>; preferences: Partial<Preference> }): Promise<User> {
     try {
       if (!body.user || !body.user.password) {
@@ -46,7 +39,6 @@ export class UsersController {
     }
   }
 
-  
   @Post(':userId/preferences')
   async addUserPreferences(@Param('userId') userId: string, @Body() preferences: Partial<Preference>): Promise<Preference> {
     return this.usersService.addUserPreferences(userId, preferences);
@@ -62,27 +54,28 @@ export class UsersController {
     return this.usersService.updateUserPreferences(userId, preferences);
   }
 
-  @Get('all')  
+  @Get('all')
   async getAllUsers(): Promise<User[]> {
-    return this.usersService.getAllUsers();  // Appelle la méthode dans le service
+    return this.usersService.getAllUsers();
   }
-  
+
   @Get(':id')
   @UseGuards(AuthGuard)
   async findById(@Param('id') id: string): Promise<User> {
     return this.usersService.findById(id);
   }
+
   @Post('checkverification')
   async checkVerification(@Body('email') email: string) {
-      const user = await this.usersService.findByEmail(email);
-      if (!user) {
-          return { isVerified: false }; // ❌ Prevent undefined errors
-      }
-  
-      console.log('🔍 Checking verification for ${email}: ${user.isVerified}');
-  
-      return { isVerified: user.isVerified }; // ✅ Ensure this returns HTTP 200
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      return { isVerified: false };
+    }
+
+    console.log(`🔍 Checking verification for ${email}: ${user.isVerified}`);
+    return { isVerified: user.isVerified };
   }
+
   @Put(':id/update')
   @UseGuards(AuthGuard)
   @UseInterceptors(
@@ -114,44 +107,48 @@ export class UsersController {
     await this.usersService.delete(id);
     return 'Account deleted successfully';
   }
+
   @Put(':userId/unlock/:placeId')
-  async unlockPlace(
-    @Param('userId') userId: string,
-    @Param('placeId') placeId: string,
-  ) {
+  async unlockPlace(@Param('userId') userId: string, @Param('placeId') placeId: string) {
     return this.usersService.unlockPlace(userId, placeId);
   }
 
   @Get(':userId/unlocked-places')
-async getUnlockedPlaces(@Param('userId') userId: string) {
-  return this.usersService.getUnlockedPlaces(userId);
-}
-
-@Put(':userId/favorites/:placeId')
-async addPlaceToFavorites(
-  @Param('userId') userId: string,
-  @Param('placeId') placeId: string
-) {
-  return this.usersService.addPlaceToFavorites(userId, placeId);
-}
-
-@Get(':userId/favorites')
-async getUserFavorites(@Param('userId') userId: string) {
-  const user = await this.usersService.findById(userId);
-  if (!user) {
-    throw new NotFoundException('User not found');
+  async getUnlockedPlaces(@Param('userId') userId: string) {
+    return this.usersService.getUnlockedPlaces(userId);
   }
-  const favorites = user.favorites.map(fav => String(fav)); // Convert to string
-  return favorites;
-}
 
-@Delete(':userId/favorites/:placeId')
-async removePlaceFromFavorites(
-  @Param('userId') userId: string,
-  @Param('placeId') placeId: string
-) {
-  return this.usersService.removePlaceFromFavorites(userId, placeId);
-}
+  @Put(':userId/favorites/:placeId')
+  async addPlaceToFavorites(@Param('userId') userId: string, @Param('placeId') placeId: string) {
+    return this.usersService.addPlaceToFavorites(userId, placeId);
+  }
 
+  @Get(':userId/favorites')
+  async getUserFavorites(@Param('userId') userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const favorites = user.favorites.map(fav => String(fav)); // Convert to string
+    return favorites;
+  }
 
+  @Delete(':userId/favorites/:placeId')
+  async removePlaceFromFavorites(@Param('userId') userId: string, @Param('placeId') placeId: string) {
+    return this.usersService.removePlaceFromFavorites(userId, placeId);
+  }
+
+  // Get coins for a specific user
+  @Get(':userId/coins')
+  async getCoinsByUserId(@Param('userId') userId: string): Promise<{ coins: number }> {
+    const coins = await this.usersService.getCoinsByUserId(userId);
+    return { coins };
+  }
+
+  // Add coins to a user (up to the maximum limit of 500)
+  @Put(':userId/coins')
+  async addCoins(@Param('userId') userId: string, @Body('coins') coins: number) {
+    const updatedUser = await this.usersService.addCoins(userId, coins);
+    return { coins: updatedUser.coins };
+  }
 }

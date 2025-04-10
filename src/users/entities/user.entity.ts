@@ -47,12 +47,20 @@ export class User extends Document {
 unlockedCarnets: string[]; // Liste des ID des carnets débloqués  
 @Prop({ type: [String], default: [] }) 
 unlockedPlaces: string[]; 
+
 @Prop({ type: Types.ObjectId, ref: 'Preference', default: null }) 
 preferences: Types.ObjectId | null;
 @Prop({ type: Boolean, default: false })  
 isVerified: boolean;
 @Prop({ type: [Types.ObjectId], ref: 'Place', default: [] })
 favorites: Types.Array<Types.ObjectId>;  // Ajoutez cette ligne pour les places favorites
+@Prop({ type: [String], default: [] }) 
+interactions: string[];
+@Prop({ type: [String], default: [] })
+searchHistory: string[]; // ex : ["café", "plage", "shopping"]
+
+@Prop({ type: [String], default: [] })
+tags: string[];
 
 }
 

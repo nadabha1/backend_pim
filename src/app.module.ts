@@ -17,7 +17,12 @@ import { UploadModule } from './upload/upload.module';
 import { MessageModule } from './message/message.module';
 import { ConversationModule } from './conversation/conversation.module';
 import { EventModule } from './event/event.module';
-import { MessagesModule } from './messages/messages.module';
+import { ChatGateway } from './chat/chat.gateway';
+import { ChatModule } from './chat/chat.module';
+import { AiModule } from './ai/ai.module';
+import { AnalyseIaModule } from './analyse-ia/analyse-ia.module';
+import { TripPlanningController } from './trip/trip.controller';
+import { TripPlanningModule } from './trip/trip.module';
 
 @Module({
   imports: [
@@ -57,10 +62,13 @@ import { MessagesModule } from './messages/messages.module';
     MessageModule,
     ConversationModule,
     EventModule,
-    MessagesModule,
+    ChatModule,
+    AiModule,
+    AnalyseIaModule,
+    TripPlanningModule
     
   ],  controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService,ChatGateway],
   
 })
 export class AppModule {}

@@ -1,9 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Types } from 'mongoose';
 import { Event, EventDocument, EventType } from './entities/event.entity';
 import { User, UserDocument } from 'src/users/entities/user.entity';
+import { ConversationService } from 'src/conversation/conversation.service';
+import { NotificationGateway } from 'src/notification/socket.gateway';
+import { NotificationType } from 'src/notification/entities/notification.entity';
+import { UsersService } from 'src/users/users.service';
 import { Preference,PreferenceDocument } from 'src/preferences/entities/preference.entity';
  // Adjust path as needed
 
@@ -12,9 +16,29 @@ export class EventService {
   constructor(
     @InjectModel(Event.name) private eventModel: Model<EventDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    private readonly userService: UsersService,  // 🟢 Injecter UserService
+    private conversationService: ConversationService, // Adjust path as needed
+    private readonly socketGateway: NotificationGateway, // ✅ Injection du WebSocket Gateway
+    
     @InjectModel(Preference.name) private preferenceModel: Model<PreferenceDocument>,
 
   ) {}
+
+  async hasUserReachedLimit(creatorId: string): Promise<boolean> {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0); // Start of today
+
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999); // End of today
+
+    const eventCount = await this.eventModel.countDocuments({
+      creatorId: new Types.ObjectId(creatorId),
+      createdAt: { $gte: todayStart, $lte: todayEnd }, // Filter events created today
+    });
+
+    return eventCount >= 5; // If the user has created 5 or more events today, return true
+  }
+
   async createEvent(
     creatorId: string,
     title: string,
@@ -22,10 +46,21 @@ export class EventService {
     date: Date,
     location: string,
     joinPrice: number = 5,
-    type: EventType
+    type: EventType,
   ) {
+    // Check if the user has already created 5 events today
+    const hasReachedLimit = await this.hasUserReachedLimit(creatorId);
+    if (hasReachedLimit) {
+      throw new BadRequestException('You have reached the daily event creation limit.');
+    }
+
     const creatorObjectId = Types.ObjectId.createFromHexString(creatorId);
-  
+    const conversation = await this.conversationService.createConversationGroup({
+      participants: creatorId,
+      title: title, // Use the event title as the group name
+    });
+
+    // Create the event
     const event = new this.eventModel({
       creatorId: creatorObjectId,
       title,
@@ -34,12 +69,13 @@ export class EventService {
       location,
       participants: [creatorObjectId],
       joinPrice,
-      type, // ✅ Save event type
+      conversationId: conversation._id, // Link conversation ID
+      type, // Event type
     });
-  
+
     const savedEvent = await event.save();
-  
-    // Reward creator with 10 coins
+
+    // Reward the creator with 10 coins
     const user = await this.userModel.findById(creatorObjectId);
     if (user) {
       user.coins = (user.coins || 0) + 10;
@@ -47,11 +83,51 @@ export class EventService {
     } else {
       throw new Error('Creator not found');
     }
-  
+
+    // Send notifications
+    this.socketGateway.sendNotification({
+      senderId: creatorId,
+      recipientId: creatorId,
+      type: NotificationType.NEW_Event,
+      content: `Your event "${title}" has been successfully created.`,
+      data: { eventId: savedEvent._id.toString() },
+    });
+
+    const allUsersExceptCreator = await this.userService.findAllExceptCreator(creatorId);
+
+    // Send notification to all other users
+    for (const user of allUsersExceptCreator) {
+      this.socketGateway.sendNotification({
+        senderId: creatorId,
+        recipientId: user._id.toString(),
+        type: NotificationType.NEW_EVENT_All,
+        content: `A new event "${title}" has been created. Check it out!`,
+        data: { eventId: savedEvent._id.toString() },
+      });
+    }
+
     return savedEvent;
   }
-  
+  async findOne(id: string) {
+    const events = await this.eventModel.findById(id)
+    .populate({
+      path: 'participants', 
+      model:'User',
+      select: '_id name' // Ajoute avatarUrl pour éviter le crash
+    })    .exec();
+    
+  }
+// event.service.ts
 
+async isUserJoined(eventId: string, userId: string): Promise<boolean> {
+  const event = await this.eventModel.findById(eventId);
+  if (!event) throw new Error('Event not found');
+
+  // ✅ Convertir userId en ObjectId avant de vérifier
+  const userObjectId = new Types.ObjectId(userId);
+  
+  return event.participants.includes(userObjectId);
+}
   async findAll(userId: string) {
     return await this.eventModel
       .find({
@@ -60,13 +136,30 @@ export class EventService {
           { participants: Types.ObjectId.createFromHexString(userId) },
         ],
       })
-      .populate('participants')
+      .populate('participants', 'name') // côté Node.js + Mongoose
       .exec();
   }
 
-  async findAllEvents() {
-    return await this.eventModel.find().populate('participants').exec();
-  }
+ // event.service.ts
+ async findAllEvents() {
+  const events = await this.eventModel
+    .find()
+    .populate({
+      path: 'participants', 
+      model:'User',
+
+      select: '_id name' // Ajoute avatarUrl pour éviter le crash
+    })
+  const result = events.map(event => ({
+    ...event.toObject(), // 👈 Convertit à un objet simple
+    participantNames: event.participants.map(
+      (p: any) => p.name // 👉 On peut accéder à p.name car c’est un objet mongoose
+    ),
+  }));
+
+  return result;
+}
+
 
   async joinEvent(eventId: string, userId: string) {
     const eventObjectId = Types.ObjectId.createFromHexString(eventId);
@@ -75,17 +168,29 @@ export class EventService {
     if (!event) throw new Error('Event not found');
 
     if (!event.participants.includes(userObjectId)) {
-      const user = await this.userModel.findById(userObjectId);
-      if (!user || user.coins < event.joinPrice) {
-        throw new Error('Insufficient coins');
-      }
-      event.participants.push(userObjectId);
-      user.coins -= event.joinPrice;
-      await event.save();
-      await user.save();
+        const user = await this.userModel.findById(userObjectId);
+        if (!user || user.coins < event.joinPrice) {
+            throw new Error('Insufficient coins');
+        }
+        event.participants.push(userObjectId);
+        user.coins -= event.joinPrice;
+        await event.save();
+        await user.save();
     }
+
+    // ✅ Récupération correcte de la conversation
+    const conversation = await this.conversationService.findConversationByTitle(event.title);
+    if (conversation) {
+        // ✅ Correction du type avec "as string"
+        await this.conversationService.addUserToConversation(conversation._id.toString(), userId);
+    } else {
+        console.log(`❌ Conversation not found for event: ${event.title}`);
+    }
+
     return event;
-  }
+}
+
+
   async getEventsByUser(userId: string) {
     return this.eventModel.find({ where: { creatorId: userId } });
   }
@@ -150,10 +255,22 @@ export class EventService {
     }
   
     // Find events where the type matches one of the preferred event types
-    return await this.eventModel
+    const event= await this.eventModel
       .find({ type: { $in: preferredEventTypes } })
-      .populate('participants')
-      .exec();
+      .populate({
+        path: 'participants', 
+        model:'User',
+  
+        select: '_id name' // Ajoute avatarUrl pour éviter le crash
+      }).exec();
+      const result = event.map(event => ({
+        ...event.toObject(), // 👈 Convertit à un objet simple
+        participantNames: event.participants.map(
+          (p: any) => p.name // 👉 On peut accéder à p.name car c’est un objet mongoose
+        ),
+      }));
+    
+      return result;
   }
   
   

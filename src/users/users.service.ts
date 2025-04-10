@@ -8,6 +8,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { CarnetService } from 'src/carnet/carnet.service';
 import { PreferencesModule } from 'src/preferences/preferences.module';
 import { Types } from 'mongoose';
+import { PreferencesService } from 'src/preferences/preferences.service';
 
 @Injectable()
 export class UsersService {
@@ -16,6 +17,7 @@ export class UsersService {
     @InjectModel(Preference.name) private preferenceModel: Model<Preference>,
     private readonly mailerService: MailerService,
     private readonly carnetService: CarnetService, 
+    private readonly preferenceService: PreferencesService,  // Adjust path as needed
 
   ) {}
 
@@ -49,8 +51,30 @@ export class UsersService {
         throw new InternalServerErrorException(`Error creating user: ${error.message}`);
     }
 }
+async findAllExceptCreator(creatorId: string) {
+  return await this.userModel.find({ _id: { $ne: creatorId } });
+}
 
+async addCoins(userId: string, coinsToAdd: number): Promise<User> {
+  const user = await this.userModel.findById(userId);
 
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  // Calculate the new coin balance
+  const newCoinBalance = user.coins + coinsToAdd;
+
+  // If the new coin balance exceeds 500, set it to 500
+  if (newCoinBalance > 500) {
+    user.coins = 500;
+  } else {
+    user.coins = newCoinBalance;
+  }
+
+  await user.save();
+  return user;
+}
 async sendVerificationEmail(email: string, userId: string): Promise<void> {
   console.log(`🟢 Preparing to send email to: ${email}, User ID: ${userId}`);
 
@@ -59,7 +83,7 @@ async sendVerificationEmail(email: string, userId: string): Promise<void> {
       throw new Error("userId is undefined in sendVerificationEmail");
   }
 
-  const verificationLink = `http://localhost:3000/auth/confirm/${userId}`;
+  const verificationLink = `http://10.0.2.2:3000/auth/confirm/${userId}`;
   console.log(`🟢 Generated Verification Link: ${verificationLink}`);
 
   try {
@@ -125,6 +149,7 @@ async sendVerificationEmail(email: string, userId: string): Promise<void> {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+
   
     const existingPreferences = await this.preferenceModel.findOne({ user: userId });
     if (existingPreferences) {
@@ -140,7 +165,8 @@ async sendVerificationEmail(email: string, userId: string): Promise<void> {
     user.preferences = new Types.ObjectId(savedPreferences._id.toString());
     await user.save();
   
-    return savedPreferences;
+     await this.preferenceService.generateTagsFromPreferences(userId);
+     return savedPreferences;
   }
   
   async getUserPreferencesById(userId: string): Promise<Preference> {
@@ -270,6 +296,17 @@ async sendVerificationEmail(email: string, userId: string): Promise<void> {
     };
   }
 
+  async getCoinsByUserId(userId: string): Promise<number> {
+    const user = await this.userModel.findById(userId).exec();
+    
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user.coins;
+  }
+
+
 async getUnlockedPlaces(userId: string): Promise<string[]> {
   const user = await this.userModel.findById(userId);
   
@@ -304,6 +341,15 @@ async getAllUsers(): Promise<User[]> {
 
   return user;
 }
+async addUserPreference(userId: string, preferenceId: string) {
+  return this.userModel.findByIdAndUpdate(userId, { $set: { preferences: preferenceId } });
+}
+async updateUser(userId: string, updateData: Partial<User>): Promise<User> {
+  return this.userModel.findByIdAndUpdate(userId, updateData, { new: true });
+}
+async addUserFavorite(userId: string, placeId: string) {
+  return this.userModel.findByIdAndUpdate(userId, { $push: { favorites: placeId } });
+}
 async removePlaceFromFavorites(userId: string, placeId: string): Promise<User> {
   const user = await this.userModel.findById(userId);
   if (!user) {
@@ -324,6 +370,8 @@ async removePlaceFromFavorites(userId: string, placeId: string): Promise<User> {
 
   return user;
 }
+
+
 
 
 }
