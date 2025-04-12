@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, Body } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, Put } from '@nestjs/common';
 import { ReviewService } from './review.service';
 
 @Controller('reviews')
@@ -25,6 +25,16 @@ async getAverageRating(@Param('placeId') placeId: string) {
 @Get('/carnet/:carnetId/global-average-rating')
 async getGlobalAverageRating(@Param('carnetId') carnetId: string) {
   return this.reviewService.getGlobalAverageRating(carnetId);
+}
+
+@Put(':placeId')
+async updateReview(
+  @Param('placeId') placeId: string,
+  @Body('userId') userId: string,
+  @Body('rating') rating: number,
+  @Body('comment') comment?: string,
+) {
+  return this.reviewService.editReview(placeId, userId, rating, comment);
 }
 
 }

@@ -135,4 +135,26 @@ async getGlobalAverageRating(carnetId: string): Promise<number> {
   return this.calculateGlobalAverageRating(carnet);
 }
 
+
+// Modifier un avis existant
+async editReview(placeId: string, userId: string, rating: number, comment?: string) {
+  console.log(`Editing review for placeId: ${placeId} by userId: ${userId}`);
+
+  const review = await this.reviewModel.findOne({ placeId, userId });
+  if (!review) {
+    throw new NotFoundException('Review not found');
+  }
+
+  review.rating = rating;
+  review.comment = comment ?? review.comment; // garde l'ancien commentaire si aucun n'est fourni
+  await review.save();
+
+  console.log('Review updated:', review);
+
+  // Mettre à jour la moyenne des notes
+  await this.updatePlaceRating(placeId);
+
+  return review;
+}
+
 }
