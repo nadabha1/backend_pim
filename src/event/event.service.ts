@@ -98,8 +98,9 @@ export class EventService {
       path: 'participants', 
       model:'User',
       select: '_id name' // Ajoute avatarUrl pour éviter le crash
-    })    .exec();
-    
+    })
+    .exec();
+    return events
   }
 // event.service.ts
 

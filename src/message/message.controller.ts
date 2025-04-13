@@ -23,8 +23,8 @@ async getMessages2(@Param('conversationId') conversationId: string) {
   return this.messageService.getMessagesByConversation(conversationId);
 }
 @Post()
-async sendMessage(@Body() body: { conversationId: string; senderId: string; content: string }) {
-  return await this.messageService.createMessage(body.conversationId, body.senderId, body.content);
+async sendMessage(@Body() body: { conversationId: string; senderId: string; content: string ,eventId:string,type: string}) {
+  return await this.messageService.createMessage(body.conversationId, body.senderId, body.content,body.eventId,body.type);
 }
 
 }

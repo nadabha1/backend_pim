@@ -21,8 +21,7 @@ import { ChatGateway } from './chat/chat.gateway';
 import { ChatModule } from './chat/chat.module';
 import { AiModule } from './ai/ai.module';
 import { AnalyseIaModule } from './analyse-ia/analyse-ia.module';
-import { UserEvent } from './user-event/entities/user-event.entity';
-import { UserEventModule } from './user-event/user-event.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -65,7 +64,8 @@ import { UserEventModule } from './user-event/user-event.module';
     ChatModule,
     AiModule,
     AnalyseIaModule,
-    UserEventModule,
+    ScheduleModule.forRoot(),
+
     
   ],  controllers: [AppController],
   providers: [AppService,ChatGateway],

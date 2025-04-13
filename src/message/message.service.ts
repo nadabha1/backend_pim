@@ -10,11 +10,15 @@ export class MessageService {
   constructor(@InjectModel(Message.name) private messageModel: Model<Message>,
 ) {}
 
-  async createMessage(conversationId: string, senderId: string, content: string) {
+  async createMessage(conversationId: string, senderId: string, content: string,  eventId?: string, type?: string
+  ) {
     const message = new this.messageModel({
       conversation: conversationId,
       sender: senderId,
-      content: content,
+      content: content || '', // facultatif si seulement un event est partagé
+      event: eventId ?? null,
+      type: type ?? null,
+    
     });
 
 

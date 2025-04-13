@@ -14,6 +14,11 @@ export class Message extends Document {
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }] })
   seenBy: Types.ObjectId[];
+    // ✅ Nouveau champ pour partager un événement
+  @Prop({ type: Types.ObjectId, ref: 'Event', required: false })
+  event?: Types.ObjectId;
+  @Prop({ type: String, required: false })
+  type?: string;
 }
 
 // Génération automatique du schéma Mongoose
