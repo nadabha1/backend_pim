@@ -312,6 +312,22 @@ export class AIService {
       };
     }
     
+    async generateImage(prompt: string): Promise<string> {
+      const response = await axios.post(
+        'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2',
+        { inputs: prompt },
+        {
+          headers: {
+            Authorization: 'Bearer ', // Remplacez par votre token Hugging Face
+            Accept: 'application/json',
+          },
+          responseType: 'arraybuffer', // pour récupérer l'image brute
+        }
+      );
+    
+      const imageBuffer = Buffer.from(response.data, 'binary');
+      return imageBuffer.toString('base64'); // à envoyer à Flutter
+    }
     
     
 }

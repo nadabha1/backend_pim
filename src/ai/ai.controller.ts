@@ -30,5 +30,11 @@ async getPlacesBySearch(@Param('userId') userId: string) {
     ...result
   };
 }
+@Post()
+  async generatePoster(@Body('description') description: string) {
+    const prompt = `Créer une affiche artistique et colorée pour cet événement : ${description}. Affiche verticale, ambiance festive, style graphique moderne.`;
+    const imageBase64 = await this.aiService.generateImage(prompt);
 
+    return { image: `data:image/png;base64,${imageBase64}` };
+  }
 }

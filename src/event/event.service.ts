@@ -32,7 +32,8 @@ export class EventService {
   endDate: string,
   location: string,
   joinPrice: number = 5,
-  type: EventType
+  type: EventType,
+  imagePath?: string 
   ) {
     const creatorObjectId = Types.ObjectId.createFromHexString(creatorId);
 
@@ -54,7 +55,8 @@ export class EventService {
     participants: [creatorObjectId],
     joinPrice,
     conversationId: conversation._id,
-    type,// ✅ Save event type
+    type,
+    imagePath,
     });
   
     const savedEvent = await event.save();
@@ -176,9 +178,11 @@ async isUserJoined(eventId: string, userId: string): Promise<boolean> {
 }
 
 
-  async getEventsByUser(userId: string) {
-    return this.eventModel.find({ where: { creatorId: userId } });
-  }
+
+async getEventsByUser(userId: string): Promise<Event[]> {
+  return this.eventModel.find({ creatorId: new Types.ObjectId(userId) }).exec();
+}
+
   async updateEvent(eventId: string, updateData: { title?: string; description?: string; startDate?: string;
     endDate?: string; location?: string; joinPrice?: number }) {
     const eventObjectId = Types.ObjectId.createFromHexString(eventId);
