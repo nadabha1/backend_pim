@@ -4,7 +4,7 @@ import { NestExpressApplication } from '@nestjs/platform-express'; // ✅ Import
 import { join } from 'path';
 // src/main.ts
 import * as crypto from 'crypto';
-(globalThis as any).crypto = crypto;
+//(globalThis as any).crypto = crypto;
 
 async function bootstrap() {
   //  Spécifier NestExpressApplication pour éviter l'erreur

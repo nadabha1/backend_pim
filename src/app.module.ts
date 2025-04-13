@@ -22,6 +22,7 @@ import { ChatModule } from './chat/chat.module';
 import { AiModule } from './ai/ai.module';
 import { AnalyseIaModule } from './analyse-ia/analyse-ia.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { UserEventModule } from './user-event/user-event.module';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     ChatModule,
     AiModule,
     AnalyseIaModule,
+    UserEventModule,
     ScheduleModule.forRoot(),
 
     
