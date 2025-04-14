@@ -15,6 +15,6 @@ import { ConversationModule } from 'src/conversation/conversation.module';
   ],
   controllers: [NotificationController],
   providers: [NotificationService, NotificationGateway],  // ✅ Ajouter NotificationGateway ici
-  exports: [NotificationService, MongooseModule, NotificationGateway],  // ✅ Exporter NotificationGateway ici
+  exports: [NotificationService, NotificationGateway, MongooseModule], // ✅ ajoute NotificationGateway
 })
 export class NotificationModule {}

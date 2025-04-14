@@ -9,6 +9,12 @@ export class CreateNotificationDto {
   @IsOptional()
   category?: NotificationCategory = NotificationCategory.SOCIAL;
 
+  @IsOptional()
+@IsString()
+title?: string;
+
+
+
   @IsString()
   @IsNotEmpty()
   message: string;

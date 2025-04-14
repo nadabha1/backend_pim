@@ -92,6 +92,14 @@ export class EventService {
   
     return savedEvent;
   }
+  // Trouve les événements entre deux dates
+async findEventsBetween(start: Date, end: Date): Promise<Event[]> {
+  return this.eventModel.find({
+    startDate: { $gte: start },
+    endDate: { $lte: end }
+  }).exec();
+}
+
   async findOne(id: string) {
     const events = await this.eventModel.findById(id)
     .populate({

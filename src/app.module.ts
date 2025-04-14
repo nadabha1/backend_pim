@@ -22,6 +22,8 @@ import { ChatModule } from './chat/chat.module';
 import { AiModule } from './ai/ai.module';
 import { AnalyseIaModule } from './analyse-ia/analyse-ia.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { CalendarModule } from './calendar/calendar.module';
+import { ReelModule } from './reel/reel.module';
 
 @Module({
   imports: [
@@ -65,6 +67,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     AiModule,
     AnalyseIaModule,
     ScheduleModule.forRoot(),
+    CalendarModule,
+    ReelModule,
 
     
   ],  controllers: [AppController],

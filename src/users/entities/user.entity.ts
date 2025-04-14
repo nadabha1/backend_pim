@@ -61,6 +61,9 @@ searchHistory: string[]; // ex : ["café", "plage", "shopping"]
 
 @Prop({ type: [String], default: [] })
 tags: string[];
+@Prop({ type: [{ start: String, end: String }] })
+availability: { start: string; end: string }[];
+
 
 }
 
