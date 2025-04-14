@@ -102,7 +102,7 @@ async getEventsDuringUserFreeTime(@Param('userId') userId: string) {
   return this.eventService.findEventsDuringUserFreeTime(userId);
 }
 
-@Get('non-conflicting/:userId')
+/*@Get('non-conflicting/:userId')
 async getNonConflictingEvents(@Param('userId', ParseObjectIdPipe) userId: Types.ObjectId): Promise<CustomEventEntity[]> {
   try {
     const events = await this.eventService.findNonConflictingEvents(userId);
@@ -110,6 +110,11 @@ async getNonConflictingEvents(@Param('userId', ParseObjectIdPipe) userId: Types.
   } catch (error) {
     throw new Error(`Error fetching non-conflicting events: ${error.message}`);
   }
+}*/
+@Get('non-conflicting/:userId')
+async getNonConflictingEvents(@Param('userId') userId: string) {
+  return this.eventService.findNonConflictingEvents(new Types.ObjectId(userId));
 }
+
 
 }
