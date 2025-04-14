@@ -26,4 +26,13 @@ export class UserEventService {
       throw new Error('Failed to insert user events');
     }
   }
+  async getUserEvents(userId: string): Promise<UserEvent[]> {
+    try {
+      return await this.userEventModel.find({ userId }).exec();
+    } catch (error) {
+      console.error('Error fetching user events:', error);
+      throw new Error('Failed to fetch user events');
+    }
+  }
+  
 }

@@ -28,6 +28,8 @@ async isUserJoined(
     location: string;
     joinPrice?: number;
     type: EventType;
+    imagePath?: string; 
+
     }
   ) {
     const event = await this.eventService.createEvent(
@@ -38,7 +40,8 @@ async isUserJoined(
     new Date(body.endDate).toISOString(),
     body.location,
     body.joinPrice,
-    body.type // ✅ Include event type
+    body.type,
+     body.imagePath
     );
     return event;
   }
@@ -69,10 +72,9 @@ async findOne(@Param('id') id: string) {
     return await this.eventService.joinEvent(id, body.userId);
   }
   @Get('user/:userId')
-  async getUserEvents(@Param('userId') userId: string) {
+  async getByUser(@Param('userId') userId: string) {
     return this.eventService.getEventsByUser(userId);
   }
-
 
   // Add the update route
   @Patch(':id')
@@ -100,7 +102,7 @@ async getEventsDuringUserFreeTime(@Param('userId') userId: string) {
   return this.eventService.findEventsDuringUserFreeTime(userId);
 }
 
-@Get('non-conflicting/:userId')
+/*@Get('non-conflicting/:userId')
 async getNonConflictingEvents(@Param('userId', ParseObjectIdPipe) userId: Types.ObjectId): Promise<CustomEventEntity[]> {
   try {
     const events = await this.eventService.findNonConflictingEvents(userId);
@@ -108,6 +110,11 @@ async getNonConflictingEvents(@Param('userId', ParseObjectIdPipe) userId: Types.
   } catch (error) {
     throw new Error(`Error fetching non-conflicting events: ${error.message}`);
   }
+}*/
+@Get('non-conflicting/:userId')
+async getNonConflictingEvents(@Param('userId') userId: string) {
+  return this.eventService.findNonConflictingEvents(new Types.ObjectId(userId));
 }
+
 
 }

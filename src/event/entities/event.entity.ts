@@ -47,6 +47,9 @@ export class Event {
   // ✅ Add the event type enum
   @Prop({ required: true, enum: EventType, default: EventType.OTHER })
   type: EventType;
+  @Prop({ required: false })
+  imagePath: string;
+
 }
 
 export const EventSchema = SchemaFactory.createForClass(Event);

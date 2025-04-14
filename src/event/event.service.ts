@@ -32,7 +32,8 @@ export class EventService {
   endDate: string,
   location: string,
   joinPrice: number = 5,
-  type: EventType
+  type: EventType,
+  imagePath?: string 
   ) {
     const creatorObjectId = Types.ObjectId.createFromHexString(creatorId);
 
@@ -54,7 +55,8 @@ export class EventService {
     participants: [creatorObjectId],
     joinPrice,
     conversationId: conversation._id,
-    type,// ✅ Save event type
+    type,
+    imagePath,
     });
   
     const savedEvent = await event.save();
@@ -184,9 +186,11 @@ async isUserJoined(eventId: string, userId: string): Promise<boolean> {
 }
 
 
-  async getEventsByUser(userId: string) {
-    return this.eventModel.find({ where: { creatorId: userId } });
-  }
+
+async getEventsByUser(userId: string): Promise<Event[]> {
+  return this.eventModel.find({ creatorId: new Types.ObjectId(userId) }).exec();
+}
+
   async updateEvent(eventId: string, updateData: { title?: string; description?: string; startDate?: string;
     endDate?: string; location?: string; joinPrice?: number }) {
     const eventObjectId = Types.ObjectId.createFromHexString(eventId);
@@ -280,7 +284,7 @@ async isUserJoined(eventId: string, userId: string): Promise<boolean> {
   
     return this.eventModel.find({ $or: orConditions }).exec();
   }
-  async findNonConflictingEvents(userId: Types.ObjectId): Promise<Event[]> {
+  /*async findNonConflictingEvents(userId: Types.ObjectId): Promise<Event[]> {
     // 1. Fetch all events associated with the user
     const userEvents = await this.eventModel
       .find({
@@ -304,6 +308,28 @@ async isUserJoined(eventId: string, userId: string): Promise<boolean> {
         ],
       })
       .exec();
+  
+    return nonConflictingEvents;
+  }
+  */
+  async findNonConflictingEvents(userId: Types.ObjectId): Promise<Event[]> {
+    const userEvents = await this.eventModel.find({
+      $or: [{ creatorId: userId }, { participants: userId }],
+    });
+  
+    console.log(`📌 Events for user ${userId}:`, userEvents);
+  
+    const conflictingEventIds = userEvents.map(event => event._id);
+  
+    const nonConflictingEvents = await this.eventModel.find({
+      _id: { $nin: conflictingEventIds },
+      $or: [
+        { startDate: { $gte: new Date() } },
+        { endDate: { $gte: new Date() } },
+      ],
+    });
+  
+    console.log(`✅ Non-conflicting events found:`, nonConflictingEvents);
   
     return nonConflictingEvents;
   }

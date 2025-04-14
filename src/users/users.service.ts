@@ -63,7 +63,7 @@ async sendVerificationEmail(email: string, userId: string): Promise<void> {
       throw new Error("userId is undefined in sendVerificationEmail");
   }
 
-  const verificationLink = `http://192.168.1.23:3000/auth/confirm/${userId}`;
+  const verificationLink = `http://localhost:3000/auth/confirm/${userId}`;
   console.log(`🟢 Generated Verification Link: ${verificationLink}`);
 
   try {
