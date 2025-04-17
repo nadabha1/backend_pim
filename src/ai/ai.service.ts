@@ -1,15 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import axios from 'axios';
+import * as fs from 'fs';
+import * as path from 'path';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, Document } from 'mongoose';
 import { User, UserDocument } from 'src/users/entities/user.entity';
 import { Carnet, CarnetDocument } from 'src/carnet/entities/carnet.entity';
 import { ConfigService } from '@nestjs/config';
+import * as FormData from 'form-data';
 
 type PlaceDocument = Carnet['places'][0] & Document;  // ➤ Type pour reconnaître `_id`
 
 @Injectable()
 export class AIService {
+
   private apiKey: string;
 
   constructor(
@@ -314,7 +318,7 @@ export class AIService {
     
     async generateImage(prompt: string): Promise<string> {
       const response = await axios.post(
-        'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2',
+        'https://router.huggingface.co/fal-ai/fal-ai/hidream-i1-full',
         { inputs: prompt },
         {
           headers: {
@@ -329,5 +333,84 @@ export class AIService {
       return imageBuffer.toString('base64'); // à envoyer à Flutter
     }
     
+    /*async generateImageWithHuggingFace(prompt: string): Promise<string> {
+      const payload = {
+        sync_mode: true,
+        prompt: `"${prompt}"`,
+      };
     
+      try {
+        const response = await fetch(this.HF_API_URL, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${this.HF_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+    
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new HttpException(`Erreur API Hugging Face: ${errorText}`, response.status);
+        }
+    
+        const imageBlob = await response.blob();
+        const arrayBuffer = await imageBlob.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+    
+        return buffer.toString('base64'); // 👈 Retourne base64 directement
+
+      } catch (error) {
+        console.error('Erreur lors de la génération de l’image :', error);
+        throw new HttpException(
+          'Erreur lors de la génération de l’image',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+    }*/
+      async generateImageWithFlux(eventTitle: string, startDate: string, endDate: string, location: string): Promise<string> {
+        const formData = new URLSearchParams();
+        
+        // Adapter le prompt pour inclure les détails de l'événement
+        const prompt = `Créer une affiche artistique et colorée pour l'événement: ${eventTitle}. 
+                        L'événement aura lieu à ${location} du ${startDate} au ${endDate}. 
+                        Affiche verticale, ambiance festive, style graphique moderne.`;
+      
+        formData.append('prompt', prompt);
+        formData.append('width', '1024');
+        formData.append('height', '1024');
+        formData.append('seed', '918440');
+        formData.append('model', 'flux');
+      
+        try {
+          const response = await fetch(
+            'https://ai-text-to-image-generator-flux-free-api.p.rapidapi.com/aaaaaaaaaaaaaaaaaiimagegenerator/fluximagegenerate/generateimage.php',
+            {
+              method: 'POST',
+              headers: {
+                'content-type': 'application/x-www-form-urlencoded',
+                'x-rapidapi-host': 'ai-text-to-image-generator-flux-free-api.p.rapidapi.com',
+                'x-rapidapi-key': '',
+              },
+              body: formData.toString(),
+            },
+          );
+      
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new HttpException(`Erreur API Flux: ${errorText}`, response.status);
+          }
+      
+          // Lire le contenu binaire de l’image directement
+          const arrayBuffer = await response.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+      
+          return buffer.toString('base64');
+        } catch (error) {
+          console.error('Erreur avec l’API Flux:', error);
+          throw new HttpException('Erreur lors de la génération de l’image', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+      }
+      
+      
 }

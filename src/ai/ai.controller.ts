@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, HttpStatus, Param, Post, Query, Res } from '@nestjs/common';
 import { AIService } from './ai.service';
-
+import { Response } from 'express'; 
 @Controller('ai')
 export class AIController {
   constructor(private readonly aiService: AIService) {}
@@ -37,4 +37,24 @@ async getPlacesBySearch(@Param('userId') userId: string) {
 
     return { image: `data:image/png;base64,${imageBase64}` };
   }
+  
+ /* @Post('generate-poster')
+  async generatePosterH(@Body('description') description: string) {
+    const prompt = `Créer une affiche artistique et colorée pour cet événement : ${description}. Affiche verticale, ambiance festive, style graphique moderne.`;
+    const imageBase64 = await this.aiService.generateImageWithHuggingFace(prompt);
+  
+    return { image: `data:image/png;base64,${imageBase64}` };
+  }*/
+    @Post('generate-poster-flux')
+    async generatePosterWithFlux(@Body() body: { description: string; title: string; startDate: string; endDate: string; location: string }) {
+      const { description, title, startDate, endDate, location } = body;
+    
+      // Passer les informations de l'événement dans le prompt
+      const imageBase64 = await this.aiService.generateImageWithFlux(title, startDate, endDate, location);
+    
+      return { image: `data:image/png;base64,${imageBase64}` };
+    }
+    
+    
 }
+
