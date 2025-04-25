@@ -390,7 +390,7 @@ export class AIService {
               headers: {
                 'content-type': 'application/x-www-form-urlencoded',
                 'x-rapidapi-host': 'ai-text-to-image-generator-flux-free-api.p.rapidapi.com',
-                'x-rapidapi-key': '',
+                'x-rapidapi-key': '61336e1951msh2a4562c97c8f36dp1f1c5ejsnc39b19e28754',
               },
               body: formData.toString(),
             },
