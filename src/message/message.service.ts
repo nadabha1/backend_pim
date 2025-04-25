@@ -46,4 +46,24 @@ export class MessageService {
   async getMessagesForUser(userId: string) {
     return this.messageModel.find({ $or: [{ senderId: userId }, { receiverId: userId }] });
   }
+
+  async createaudioMessage(
+    conversationId: string,
+    senderId: string,
+    content: string,
+    eventId?: string,
+    type?: string,
+  ) {
+    const message = new this.messageModel({
+      conversation: conversationId,
+      sender: senderId,
+      content: content || '',
+      event: eventId ?? null,
+      type: type ?? 'text', // 'audio', 'event', etc.
+    });
+  
+    return await message.save();
+  }
+  
+  
 }
