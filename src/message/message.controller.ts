@@ -29,7 +29,6 @@ async getMessages2(@Param('conversationId') conversationId: string) {
 async sendMessage(@Body() body: { conversationId: string; senderId: string; content: string ,eventId:string,type: string}) {
   return await this.messageService.createMessage(body.conversationId, body.senderId, body.content,body.eventId,body.type);
 }
-// Dans ton contrôleur :
 @Post('audio')
 @UseInterceptors(
   FileInterceptor('audio', {

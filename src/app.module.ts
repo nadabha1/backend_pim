@@ -23,6 +23,7 @@ import { AiModule } from './ai/ai.module';
 import { AnalyseIaModule } from './analyse-ia/analyse-ia.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { UserEventModule } from './user-event/user-event.module';
+import { AgoraModule } from './agora/agora.module';
 
 @Module({
   imports: [
@@ -67,6 +68,7 @@ import { UserEventModule } from './user-event/user-event.module';
     AnalyseIaModule,
     UserEventModule,
     ScheduleModule.forRoot(),
+    AgoraModule,
 
     
   ],  controllers: [AppController],
