@@ -22,8 +22,7 @@ export class AIService {
     @InjectModel('Preference') private preferenceModel: Model<any>,
     private configService: ConfigService
   ) {
-    this.apiKey = "";
-    if (!this.apiKey) {
+    this.apiKey = "sk-Xh3kl2eRQ4IiRKVFNpZWm3OyX4mmvxARpupdoErE0Xfklfwb";    if (!this.apiKey) {
       throw new Error('La clé API ChatAnywhere est manquante !');
     }
   }
@@ -342,7 +341,7 @@ export class AIService {
       }
     }
     
-    async generateImage2(prompt: string): Promise<string> {
+    /*async generateImage2(prompt: string): Promise<string> {
       const response = await axios.post(
         'https://router.huggingface.co/fal-ai/fal-ai/hidream-i1-full',
         { inputs: prompt },
@@ -357,7 +356,7 @@ export class AIService {
     
       const imageBuffer = Buffer.from(response.data, 'binary');
       return imageBuffer.toString('base64'); // à envoyer à Flutter
-    }
+    }*/
     
     /*async generateImageWithHuggingFace(prompt: string): Promise<string> {
       const payload = {
