@@ -26,6 +26,8 @@ import { UserEventModule } from './user-event/user-event.module';
 import { AgoraModule } from './agora/agora.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { ReelModule } from './reel/reel.module';
+import { MatchingModule } from './matching/matching.module';
+
 
 @Module({
   imports: [
@@ -72,6 +74,7 @@ import { ReelModule } from './reel/reel.module';
     AgoraModule,
     CalendarModule,
     ReelModule,
+    MatchingModule,
 
     
   ],  controllers: [AppController],
