@@ -1,0 +1,7 @@
+file 'G:/nada/4SIM2/PIM/backend_pim/uploads/reels/06870eac-8c19-4c4d-8c8f-7436071eeff8.jpg'
+duration 3
+file 'G:/nada/4SIM2/PIM/backend_pim/uploads/reels/b4b7f528-1945-469a-9595-dc08e6d63c4c.jpg'
+duration 3
+file 'G:/nada/4SIM2/PIM/backend_pim/uploads/reels/0acf3c4e-faa0-4a21-836a-29707d442a39.jpg'
+duration 3
+file 'G:/nada/4SIM2/PIM/backend_pim/uploads/reels/0acf3c4e-faa0-4a21-836a-29707d442a39.jpg'

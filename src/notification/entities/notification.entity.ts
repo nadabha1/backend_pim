@@ -8,6 +8,7 @@ export enum NotificationType {
   NEW_EVENT_All = 'NEW_EVENT_All',  
   MESSAGE = 'MESSAGE',
   FOLLOW= 'FOLLOW',
+  INFO='INFO'
 }
 
 export enum NotificationCategory {

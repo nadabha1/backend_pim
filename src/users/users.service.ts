@@ -160,6 +160,16 @@ async sendVerificationEmail(email: string, userId: string): Promise<void> {
   /**
    * ✅ Update user details
    */
+  async updateAvailability(userId: string, availability: any[]) {
+    return this.userModel.findByIdAndUpdate(userId, {
+      availability: availability,
+    });
+  }
+  // Exemple de méthode fictive : renvoyer tous les users avec leurs créneaux de disponibilité
+async findAllWithAvailability(): Promise<User[]> {
+  return this.userModel.find({ disponibilites: { $exists: true } }).exec();
+}
+
   async update(id: string, updateData: Partial<User>): Promise<User> {
     return this.userModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
   }

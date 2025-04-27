@@ -19,5 +19,7 @@ import { FreeTimeModule } from 'src/free-times/free-times.module';
   ],
   controllers: [EventController],
   providers: [EventService],
+  exports: [EventService], // ✅ exporter le service ici
+
 })
 export class EventModule {}
