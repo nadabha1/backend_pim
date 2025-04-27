@@ -3,7 +3,7 @@ import { Document, Types } from 'mongoose';
 export type CarnetDocument = Carnet & Document;
 
 @Schema()
-export class Place {
+export class Place extends Document {
 
  
 
@@ -27,6 +27,9 @@ export class Place {
 
   @Prop({ type: [String], default: [] })
   images: string[];
+  
+  @Prop({ default: 0 })
+  averageRating: number; // Note moyenne des avis
 }
 
 @Schema()
@@ -39,6 +42,10 @@ export class Carnet extends Document {
 
   @Prop({ type: [Place], default: [] })
   places: Place[];
+  
+  @Prop({ default: 0 }) // Note globale par défaut de 0
+  globalAverageRating: number;
+
 }
 
 export const CarnetSchema = SchemaFactory.createForClass(Carnet);

@@ -2,6 +2,7 @@ import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { User } from '../../users/entities/user.entity';
 
+export type PreferenceDocument = Preference & Document;
 @Schema({ timestamps: true }) // ✅ Automatically adds createdAt & updatedAt fields
 export class Preference extends Document {
   @Prop({ required: true, type: Types.ObjectId, ref: 'User', unique: true })
@@ -16,10 +17,10 @@ export class Preference extends Document {
   @Prop({ type: [String], default: [] })
   eventPreferences?: string[];
   
-  @Prop({ required: false, enum: ['Solo', 'Small Groups', 'Large Groups'] })
+  @Prop({ required: false, enum: ['Solo Activities', 'Small Groups', 'Large Gatherings'] })
   socialPreference?: string;
   
-  @Prop({ required: false, enum: ['Morning', 'Afternoon', 'Evening', 'No Preference'] })
+  @Prop({ required: false, enum: ['Morning', 'Afternoon', 'Evening', 'No Preference', 'Late Night'] })
   preferredEventTime?: string;
   
 }

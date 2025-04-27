@@ -8,7 +8,7 @@ import { PreferencesModule } from 'src/preferences/preferences.module';
 import { CarnetService } from 'src/carnet/carnet.service';
 import { Preference, PreferenceSchema } from 'src/preferences/entities/preference.entity';
 import { Carnet, CarnetSchema } from 'src/carnet/entities/carnet.entity';
-import { EventModule } from 'src/event/event.module';
+import { PreferencesService } from 'src/preferences/preferences.service';
 
 @Module({
   imports: [
@@ -16,12 +16,12 @@ import { EventModule } from 'src/event/event.module';
       { name: User.name, schema: UserSchema },
       { name: Preference.name, schema: PreferenceSchema },
       { name: Carnet.name, schema: CarnetSchema },
+      
        // ✅ Add Preference Model
     ]),
-   
   ],
   controllers: [UsersController],
-  providers: [UsersService,CarnetService],
+  providers: [UsersService,CarnetService,PreferencesService],
   exports: [UsersService,CarnetService,MongooseModule], // Export pour utilisation dans AuthService
 
 })

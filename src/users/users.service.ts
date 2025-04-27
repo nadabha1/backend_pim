@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
@@ -7,6 +7,8 @@ import { Preference } from 'src/preferences/entities/preference.entity';
 import { MailerService } from '@nestjs-modules/mailer';
 import { CarnetService } from 'src/carnet/carnet.service';
 import { PreferencesModule } from 'src/preferences/preferences.module';
+import { Types } from 'mongoose';
+import { PreferencesService } from 'src/preferences/preferences.service';
 
 @Injectable()
 export class UsersService {
@@ -15,6 +17,7 @@ export class UsersService {
     @InjectModel(Preference.name) private preferenceModel: Model<Preference>,
     private readonly mailerService: MailerService,
     private readonly carnetService: CarnetService, 
+    private readonly preferenceService: PreferencesService,  // Adjust path as needed
 
   ) {}
 
@@ -27,36 +30,30 @@ export class UsersService {
             throw new BadRequestException('Invalid user data. Password is required.');
         }
 
-        // ✅ Hash password
         const hashedPassword = await bcrypt.hash(user.password, 10);
-        const newUser = new this.userModel({ 
-            ...user, 
-            password: hashedPassword, 
-            isVerified: false,  // User must verify their email
+        const newUser = new this.userModel({
+            ...user,
+            password: hashedPassword,
+            isVerified: false,
         });
 
-        // ✅ Save user first before accessing _id
         const savedUser = await newUser.save();
         console.log("🟢 User successfully saved:", savedUser);
         console.log("🟢 Generated User ID:", savedUser._id);
-        // ✅ Save user preferences
-        if (preferences) {
-            const userPreferences = new this.preferenceModel({
-                user: savedUser._id,  // Use savedUser._id after save()
-                ...preferences,
-            });
-            await userPreferences.save();
-        }
 
-        // ✅ Send Verification Email after saving
+        await savedUser.save();
+        console.log("✅ Preferences linked to User:", savedUser._id);
+
         await this.sendVerificationEmail(savedUser.email, savedUser._id.toString());
-
         return savedUser;
     } catch (error) {
-        throw new Error(`Error creating user: ${error.message}`);
+        console.error("❌ Error creating user:", error);
+        throw new InternalServerErrorException(`Error creating user: ${error.message}`);
     }
 }
-
+async findAllExceptCreator(creatorId: string) {
+  return await this.userModel.find({ _id: { $ne: creatorId } });
+}
 
 async sendVerificationEmail(email: string, userId: string): Promise<void> {
   console.log(`🟢 Preparing to send email to: ${email}, User ID: ${userId}`);
@@ -66,7 +63,7 @@ async sendVerificationEmail(email: string, userId: string): Promise<void> {
       throw new Error("userId is undefined in sendVerificationEmail");
   }
 
-  const verificationLink = `http://localhost:3000/auth/confirm/${userId}`;
+  const verificationLink = `http://192.168.1.23:3000/auth/confirm/${userId}`;
   console.log(`🟢 Generated Verification Link: ${verificationLink}`);
 
   try {
@@ -127,16 +124,52 @@ async sendVerificationEmail(email: string, userId: string): Promise<void> {
     return this.userModel.findById(id).populate('preferences').exec();
   }
 
-  /**
-   * ✅ Get User Preferences
-   */
-  async getUserPreferences(userId: string): Promise<Preference | null> {
-    return this.preferenceModel.findOne({ user: userId }).exec();
+  async addUserPreferences(userId: string, preferences: Partial<Preference>): Promise<Preference> {
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+  
+    const existingPreferences = await this.preferenceModel.findOne({ user: userId });
+    if (existingPreferences) {
+      throw new BadRequestException('Preferences already exist for this user');
+    }
+  
+    const newPreferences = new this.preferenceModel({
+      user: userId,
+      ...preferences,
+    });
+  
+    const savedPreferences = await newPreferences.save();
+    user.preferences = new Types.ObjectId(savedPreferences._id.toString());
+    await user.save();
+  
+     await this.preferenceService.generateTagsFromPreferences(userId);
+     return savedPreferences;
+  }
+  
+  async getUserPreferencesById(userId: string): Promise<Preference> {
+    const preferences = await this.preferenceModel.findOne({ user: userId }).exec();
+    if (!preferences) {
+      throw new NotFoundException('Preferences not found for this user');
+    }
+    return preferences;
   }
 
   /**
    * ✅ Update user details
    */
+  async updateAvailability(userId: string, availability: any[]) {
+    return this.userModel.findByIdAndUpdate(userId, {
+      availability: availability,
+    });
+  }
+  // Exemple de méthode fictive : renvoyer tous les users avec leurs créneaux de disponibilité
+async findAllWithAvailability(): Promise<User[]> {
+  return this.userModel.find({ disponibilites: { $exists: true } }).exec();
+}
+
   async update(id: string, updateData: Partial<User>): Promise<User> {
     return this.userModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
   }
@@ -144,8 +177,18 @@ async sendVerificationEmail(email: string, userId: string): Promise<void> {
   /**
    * ✅ Update user preferences
    */
-  async updatePreferences(userId: string, preferences: Partial<Preference>): Promise<Preference> {
-    return this.preferenceModel.findOneAndUpdate({ user: userId }, preferences, { new: true }).exec();
+  async updateUserPreferences(userId: string, preferences: Partial<Preference>): Promise<Preference> {
+    const updatedPreferences = await this.preferenceModel.findOneAndUpdate(
+      { user: userId },
+      { $set: preferences },
+      { new: true }
+    ).exec();
+
+    if (!updatedPreferences) {
+      throw new NotFoundException('Preferences not found for this user');
+    }
+
+    return updatedPreferences;
   }
 
   /**
@@ -256,4 +299,57 @@ async getUnlockedPlaces(userId: string): Promise<string[]> {
 async getAllUsers(): Promise<User[]> {
   return this.userModel.find().exec(); // Récupère tous les utilisateurs
 }
+ // Ajouter une place aux favoris
+ async addPlaceToFavorites(userId: string, placeId: string): Promise<User> {
+  const user = await this.userModel.findById(userId);
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  // Convertir placeId en ObjectId
+  const placeObjectId = new Types.ObjectId(placeId);
+
+  // Vérifier si la place existe déjà dans les favoris
+  if (user.favorites.includes(placeObjectId)) {
+    throw new BadRequestException('Place already in favorites');
+  }
+
+  // Ajouter la place aux favoris
+  user.favorites.push(placeObjectId);
+  await user.save();
+
+  return user;
 }
+async addUserPreference(userId: string, preferenceId: string) {
+  return this.userModel.findByIdAndUpdate(userId, { $set: { preferences: preferenceId } });
+}
+async updateUser(userId: string, updateData: Partial<User>): Promise<User> {
+  return this.userModel.findByIdAndUpdate(userId, updateData, { new: true });
+}
+async addUserFavorite(userId: string, placeId: string) {
+  return this.userModel.findByIdAndUpdate(userId, { $push: { favorites: placeId } });
+}
+async removePlaceFromFavorites(userId: string, placeId: string): Promise<User> {
+  const user = await this.userModel.findById(userId);
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  // Convertir placeId en ObjectId
+  const placeObjectId = new Types.ObjectId(placeId);
+
+  // Vérifier si la place est bien dans les favoris
+  if (!user.favorites.some(id => id.equals(placeObjectId))) {
+    throw new BadRequestException('Place not found in favorites');
+  }
+
+  // Supprimer la place des favoris
+  user.favorites = user.favorites.toObject().filter(id => !id.equals(placeObjectId));
+  await user.save();
+
+  return user;
+}
+
+
+}
+

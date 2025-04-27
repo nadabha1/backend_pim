@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, NotFoundException, Query, HttpStatus, HttpException } from '@nestjs/common';
 import { CarnetService } from './carnet.service';
+import { Carnet, Place } from './entities/carnet.entity';
 
 @Controller('carnets')
 export class CarnetController {
@@ -49,13 +50,24 @@ async addPlace(
   }
 
   @Put(':id')
-  updateCarnet(@Param('id') id: string, @Body() data: any) {
-    return this.carnetService.updateCarnet(id, data);
+  async updateCarnet(
+    @Param('id') carnetId: string,
+    @Body() updateData: any
+  ) {
+    return this.carnetService.updateCarnet(carnetId, updateData);
   }
+  
 
   @Delete(':id')
-  deleteCarnet(@Param('id') id: string) {
-    return this.carnetService.deleteCarnet(id);
+  async deleteCarnet(
+    @Param('id') carnetId: string,
+    @Body('userId') userId: string,
+  ) {
+    if (!userId) {
+      throw new NotFoundException('User ID is required');
+    }
+    await this.carnetService.deleteCarnet(carnetId, userId);
+    return { message: 'Carnet supprimé avec succès' };
   }
 //tessssst
   @Put('user/:userId/unlock/:carnetId')
@@ -91,5 +103,47 @@ async getOwnerByPlace(@Param('placeId') placeId: string) {
   async getAllPlaces() {
     return this.carnetService.getAllPlaces();
   }
+  @Get('place/:placeId')
+  async getPlaceById(@Param('placeId') placeId: string) {
+    return this.carnetService.getPlaceById(placeId);
+  }
+
+  @Put(':id/places/:placeId')
+async updatePlace(
+  @Param('id') carnetId: string,
+  @Param('placeId') placeId: string,
+  @Body() updateData: any
+) {
+  return this.carnetService.updatePlace(carnetId, placeId, updateData);
+}
+@Get('place/:placeId/carnetid')
+async findCarnetIdByPlaceId(@Param('placeId') placeId: string): Promise<string | null> {
+  const carnetId = await this.carnetService.findCarnetIdByPlaceId(placeId);
+  
+  if (!carnetId) {
+    throw new NotFoundException('Carnet not found for the given place');
+  }
+
+  return carnetId;  // Retourne l'ID du carnet trouvé
+}
+@Delete(':carnetId/places/:placeId')
+async deletePlace(
+  @Param('carnetId') carnetId: string,
+  @Param('placeId') placeId: string
+) {
+  return this.carnetService.deletePlace(carnetId, placeId);
+}
+
+ // Recherche des places par catégorie
+ @Get('category/:category')
+ async getPlacesByCategory(@Param('category') category: string): Promise<Place[]> {
+   return this.carnetService.getPlacesByCategory(category);
+ }
+
+ // Recherche des places par plusieurs catégories
+ @Get('categories')
+ async getPlacesByCategories(@Query('categories') categories: string[]): Promise<Place[]> {
+   return this.carnetService.getPlacesByCategories(categories);
+ }
 
 }

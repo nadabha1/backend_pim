@@ -11,9 +11,20 @@ import { CarnetModule } from './carnet/carnet.module';
 import { FollowModule } from './follow/follow.module';
 import { Preference } from './preferences/entities/preference.entity';
 import { PreferencesModule } from './preferences/preferences.module';
+import { ReviewModule } from './review/review.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { UploadModule } from './upload/upload.module';
+import { MessageModule } from './message/message.module';
+import { ConversationModule } from './conversation/conversation.module';
 import { EventModule } from './event/event.module';
-import { MessageModule } from './messages/message.module';
-
+import { ChatGateway } from './chat/chat.gateway';
+import { ChatModule } from './chat/chat.module';
+import { AiModule } from './ai/ai.module';
+import { AnalyseIaModule } from './analyse-ia/analyse-ia.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { CalendarModule } from './calendar/calendar.module';
+import { ReelModule } from './reel/reel.module';
+import { MatchingModule } from './matching/matching.module';
 
 @Module({
   imports: [
@@ -38,17 +49,32 @@ import { MessageModule } from './messages/message.module';
         },
       },
     }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'), // Serve files from 'uploads' directory
+      serveRoot: '/uploads', // URL prefix for accessing files
+    }),
     MongooseModule.forRoot('mongodb+srv://houssem:houssem@projet.zkvpi.mongodb.net/nestjs_app'),
     UsersModule,
     AuthModule,
     CarnetModule,
     FollowModule,
     PreferencesModule,
-    EventModule,
+    ReviewModule,
+    UploadModule,
     MessageModule,
+    ConversationModule,
+    EventModule,
+    ChatModule,
+    AiModule,
+    AnalyseIaModule,
+    ScheduleModule.forRoot(),
+    CalendarModule,
+    ReelModule,
+    MatchingModule,
+
     
   ],  controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService,ChatGateway],
   
 })
 export class AppModule {}

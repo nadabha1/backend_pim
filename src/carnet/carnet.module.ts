@@ -14,8 +14,8 @@ import { User, UserSchema } from 'src/users/entities/user.entity';
     ])
   ],
     controllers: [CarnetController],
-  providers: [CarnetService],
-  exports: [CarnetService],  // Exporting CarnetService so it can be used elsewhere
+  providers: [CarnetService,CarnetModule],
+  exports: [CarnetService,CarnetModule],  // Exporting CarnetService so it can be used elsewhere
 
 })
 export class CarnetModule {}

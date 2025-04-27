@@ -1,9 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseInterceptors } from '@nestjs/common';
-import { UploadService } from './upload.service';
-
+import { Controller, Post, UploadedFile, UseInterceptors, HttpStatus } from '@nestjs/common';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { extname, join } from 'path';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { UploadService } from './upload.service';
 
 @Controller('upload')
 export class UploadController {
@@ -26,7 +25,7 @@ export class UploadController {
     return {
       message: 'File uploaded successfully!',
       filename: file.filename,
-      url: `http://localhost:3000/uploads/${file.filename}`,
+      url: `http://192.168.1.23:3000/uploads/${file.filename}`,
     };
   }
 }

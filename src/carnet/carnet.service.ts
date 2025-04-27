@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Carnet, CarnetDocument } from './entities/carnet.entity';
+import { Carnet, CarnetDocument, Place } from './entities/carnet.entity';
 import { User, UserDocument } from 'src/users/entities/user.entity';
 
 @Injectable()
@@ -20,6 +20,7 @@ async addPlace(carnetId: string, placeData: any): Promise<Carnet> {
   console.log(`Place Data Received:`, placeData);
 
   carnet.places.push(placeData);
+  
   return await carnet.save();
 }
 
@@ -114,15 +115,28 @@ async getCarnetByUserId(userId: string): Promise<Carnet | null> {
     return carnet;
   }
 
-  async updateCarnet(id: string, data: any): Promise<Carnet> {
-    return this.carnetModel.findByIdAndUpdate(id, data, { new: true }).exec();
+  async updateCarnet(carnetId: string, updateData: any): Promise<Carnet> {
+    const carnet = await this.carnetModel.findByIdAndUpdate(carnetId, updateData, { new: true }).exec();
+    if (!carnet) {
+      throw new NotFoundException('Carnet not found');
+    }
+    return carnet;
   }
-
-  async deleteCarnet(id: string): Promise<Carnet> {
-    return this.carnetModel.findByIdAndDelete(id).exec();
-
   
-  }
+  async deleteCarnet(carnetId: string, userId: string): Promise<void> {
+    // 🗑 Supprimer le carnet
+    const carnet = await this.carnetModel.findByIdAndDelete(carnetId);
+    if (!carnet) {
+      throw new NotFoundException('Carnet introuvable');
+    }
+
+    // 🧹 Supprimer le carnetId dans l'entité User
+    await this.userModel.findByIdAndUpdate(userId, {
+      $unset: { carnetId: '' }, // 🗑 Supprime la référence du carnet
+    });
+  } 
+  
+  
 //tesssttt
   async unlockCarnet(userId: string, carnetId: string): Promise<{ message: string; coins: number }> {
     const user = await this.userModel.findById(userId);
@@ -227,6 +241,107 @@ async getAllPlaces(): Promise<any[]> {
     console.error('Error retrieving places:', error); // Log any error
     throw new InternalServerErrorException('Error retrieving places');
   }
+}
+async getPlaceById(placeId: string): Promise<any> {
+  // Find a carnet that contains the place with the given placeId
+  const carnet = await this.carnetModel.findOne({ 'places._id': placeId }).exec();
+
+  if (!carnet) {
+    throw new NotFoundException('Place not found');
+  }
+
+  // Retrieve the place data from the places array by its placeId
+  const place = carnet.places.find(p => (p as any)._id.toString() === placeId);
+  
+  if (!place) {
+    throw new NotFoundException('Place not found');
+  }
+
+  return place;
+}
+
+
+async updatePlace(carnetId: string, placeId: string, updateData: any): Promise<any> {
+  const carnet = await this.carnetModel.findById(carnetId);
+  if (!carnet) throw new NotFoundException('Carnet not found');
+
+  const placeIndex = carnet.places.findIndex(p => (p as any)._id.toString() === placeId);
+  if (placeIndex === -1) throw new NotFoundException('Place not found');
+
+  // Appliquer les modifications à la place
+  Object.assign(carnet.places[placeIndex], updateData);
+
+  await carnet.save();
+  return carnet.places[placeIndex];
+}
+
+async findCarnetIdByPlaceId(placeId: string): Promise<string | null> {
+  const placeObjectId = new Types.ObjectId(placeId); // Conversion en ObjectId
+  const carnet = await this.carnetModel.findOne({ "places._id": placeObjectId }).exec();
+  if (carnet) {
+    return carnet.id;  // Retourne l'ID du carnet
+  }
+  return null;  // Retourne null si aucun carnet n'est trouvé
+}
+
+async deletePlace(carnetId: string, placeId: string): Promise<Carnet> {
+  const carnet = await this.carnetModel.findById(carnetId);
+  if (!carnet) {
+    throw new NotFoundException('Carnet not found');
+  }
+
+  // Find the index of the place to be deleted
+  const placeIndex = carnet.places.findIndex((p) => (p as any)._id.toString() === placeId);
+  if (placeIndex === -1) {
+    throw new NotFoundException('Place not found');
+  }
+
+  // Remove the place from the carnet's places array
+  carnet.places.splice(placeIndex, 1);
+
+  await carnet.save();
+  return carnet;
+}
+
+ // Recherche des places dans un carnet par catégorie
+ async getPlacesByCategory(category: string): Promise<Place[]> {
+  const carnet = await this.carnetModel.findOne({
+    'places.categories': category, // Recherche de places avec la catégorie donnée
+  }).exec();
+  
+  if (!carnet) {
+    return []; // Si aucun carnet trouvé, retourner un tableau vide
+  }
+
+  return carnet.places.filter(place => place.categories.includes(category));
+}
+
+// Recherche des places dans un carnet par plusieurs catégories
+async getPlacesByCategories(categories: string[]): Promise<Place[]> {
+  const carnet = await this.carnetModel.findOne({
+    'places.categories': { $in: categories }, // Recherche des places qui ont l'une des catégories spécifiées
+  }).exec();
+
+  if (!carnet) {
+    return []; // Si aucun carnet trouvé, retourner un tableau vide
+  }
+
+  return carnet.places.filter(place => 
+    place.categories.some(category => categories.includes(category))
+  );
+}
+async updateGlobalRating(carnetId: string) {
+  const carnet = await this.carnetModel.findById(carnetId).populate('places').exec();
+  if (!carnet) {
+    throw new Error('Carnet not found');
+  }
+
+  const totalRatings = carnet.places.reduce((sum, place) => sum + place.averageRating, 0);
+  const globalAverageRating = carnet.places.length > 0 ? totalRatings / carnet.places.length : 0;
+
+  // Mettre à jour la note globale du carnet
+  carnet.globalAverageRating = globalAverageRating;
+  await carnet.save();
 }
 
 }

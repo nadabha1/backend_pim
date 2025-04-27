@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, UseInterceptors, UploadedFile, BadRequestException,NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { User } from './entities/user.entity';
@@ -30,12 +30,37 @@ export class UsersController {
     }
     return this.usersService.create(user);
   }*/
-    async register(@Body() body: { user: Partial<User>; preferences: Partial<Preference> }): Promise<User> {
+    @Post('register')
+  async register(@Body() body: { user: Partial<User>; preferences: Partial<Preference> }): Promise<User> {
+    try {
       if (!body.user || !body.user.password) {
-        throw new Error("User data is missing or incomplete");
+        throw new BadRequestException('Invalid user data. Password is required.');
       }
-      return this.usersService.create(body.user, body.preferences);
+      const newUser = await this.usersService.create(body.user, body.preferences);
+      return newUser;
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('An error occurred while registering the user.');
     }
+  }
+
+  
+  @Post(':userId/preferences')
+  async addUserPreferences(@Param('userId') userId: string, @Body() preferences: Partial<Preference>): Promise<Preference> {
+    return this.usersService.addUserPreferences(userId, preferences);
+  }
+
+  @Get(':userId/preferences')
+  async getUserPreferencesById(@Param('userId') userId: string): Promise<Preference> {
+    return this.usersService.getUserPreferencesById(userId);
+  }
+
+  @Put(':userId/preferences')
+  async updateUserPreferences(@Param('userId') userId: string, @Body() preferences: Partial<Preference>): Promise<Preference> {
+    return this.usersService.updateUserPreferences(userId, preferences);
+  }
 
   @Get('all')  
   async getAllUsers(): Promise<User[]> {
@@ -100,6 +125,32 @@ export class UsersController {
   @Get(':userId/unlocked-places')
 async getUnlockedPlaces(@Param('userId') userId: string) {
   return this.usersService.getUnlockedPlaces(userId);
+}
+
+@Put(':userId/favorites/:placeId')
+async addPlaceToFavorites(
+  @Param('userId') userId: string,
+  @Param('placeId') placeId: string
+) {
+  return this.usersService.addPlaceToFavorites(userId, placeId);
+}
+
+@Get(':userId/favorites')
+async getUserFavorites(@Param('userId') userId: string) {
+  const user = await this.usersService.findById(userId);
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+  const favorites = user.favorites.map(fav => String(fav)); // Convert to string
+  return favorites;
+}
+
+@Delete(':userId/favorites/:placeId')
+async removePlaceFromFavorites(
+  @Param('userId') userId: string,
+  @Param('placeId') placeId: string
+) {
+  return this.usersService.removePlaceFromFavorites(userId, placeId);
 }
 
 
