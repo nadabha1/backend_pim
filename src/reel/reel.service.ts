@@ -8,7 +8,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { exec } from 'child_process';
 import * as ffmpegPath from '@ffmpeg-installer/ffmpeg';
-  import * as fluentFfmpeg from 'fluent-ffmpeg';
+import * as fluentFfmpeg from 'fluent-ffmpeg';
   
   fluentFfmpeg.setFfmpegPath(ffmpegPath.path);
   
@@ -22,10 +22,10 @@ export class ReelService {
   }
 
   // 📸 Étape 1 : Sauvegarde des fichiers image associés à un événement
-  async saveReel(data: { eventId: string; userId: string; mediaUrls: string[] }) {
+  async saveReel(data: { eventId: string; userId: string; mediaUrls: string[] , isShared: boolean }): Promise<ReelMedia> {
     return await this.reelModel.create(data);
   }
-  async generateReel(eventId: string): Promise<string> {
+ /* async generateReel(eventId: string): Promise<string> {
     const reel = await this.reelModel.findOne({ eventId });
     if (!reel || reel.mediaUrls.length === 0) {
       throw new Error('Aucune image trouvée');
@@ -78,9 +78,60 @@ export class ReelService {
         .save(outputPath);
     });
   }
-  
+  */
   
   // 🧪 Option B (rarement utile ici) : génération via globbing
+  async findReelsByEvent(eventId: string) {
+    if (!eventId) throw new Error('Event ID manquant');
+    return this.reelModel.find({ eventId });
+  }
+  
+  async generateReel(eventId: string, userId: string): Promise<string> {
+    const reel = await this.reelModel.findOne({ eventId, userId });
+    if (!reel || reel.mediaUrls.length === 0) {
+      throw new Error('Aucune image trouvée');
+    }
+  
+    const outputDir = path.join(__dirname, '../../public/reels');
+    const outputPath = path.join(outputDir, `${eventId}_${userId}.mp4`);
+  
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+  
+    const concatFile = path.join(__dirname, '../../uploads/reels/concat.txt');
+    const fileLines = reel.mediaUrls.map((imgPath) => {
+      const absolutePath = path.resolve(__dirname, '../../', imgPath);
+      return `file '${absolutePath.replace(/\\/g, '/')}'\nduration 3`;
+    });
+  
+    const lastImage = path.resolve(__dirname, '../../', reel.mediaUrls[reel.mediaUrls.length - 1]);
+    fileLines.push(`file '${lastImage.replace(/\\/g, '/')}'`);
+  
+    fs.writeFileSync(concatFile, fileLines.join('\n'));
+  
+    return new Promise((resolve, reject) => {
+      fluentFfmpeg()
+        .input(concatFile)
+        .inputOptions(['-f', 'concat', '-safe', '0'])
+        .outputOptions([
+          '-vf', 'scale=1280:720',
+          '-pix_fmt', 'yuv420p',
+          '-r', '30',
+        ])
+        .on('start', (cmd) => console.log('🎬 Start FFmpeg:', cmd))
+        .on('end', () => {
+          console.log('✅ Vidéo générée :', outputPath);
+          resolve(`reels/${eventId}_${userId}.mp4`);
+        })
+        .on('error', (err) => {
+          console.error('❌ FFmpeg error:', err.message);
+          reject(new Error('Erreur génération vidéo'));
+        })
+        .save(outputPath);
+    });
+  }
+  
   async generateVideo(eventId: string): Promise<string> {
     const inputDir = path.join(__dirname, '../../uploads/reels', eventId);
     const outputPath = path.join(__dirname, `../../public/reels/${eventId}.mp4`);
@@ -100,24 +151,31 @@ export class ReelService {
     });
   }
 
-// 🎵 Étape 3 : Ajout musique (optionnel)
-async addMusicToReel(eventId: string, musicFilename: string): Promise<string> {
-  const videoPath = path.join(__dirname, `../../public/reels/${eventId}.mp4`);
-  const musicPath = path.join(__dirname, `../../assets/audio/${musicFilename}`);
-  const finalPath = path.join(__dirname, `../../public/reels/${eventId}_with_music.mp4`);
+  async addMusicToReel(eventId: string, musicFilename: string): Promise<string> {
+    const videoPath = path.join(__dirname, `../../public/reels/${eventId}.mp4`);
+    const musicPath = path.join(__dirname, `../../assets/audio/${musicFilename}`);
+    const finalPath = path.join(__dirname, `../../public/reels/${eventId}_with_music.mp4`);
 
-  return new Promise((resolve, reject) => {
-    const command = `ffmpeg -i "${videoPath}" -i "${musicPath}" -shortest -c:v copy -c:a aac "${finalPath}"`;
+    // ✅ Vérifier l'existence du fichier
+    if (!fs.existsSync(videoPath)) throw new Error('🎥 Vidéo non trouvée');
+    if (!fs.existsSync(musicPath)) throw new Error('🎵 Fichier musique non trouvé');
 
-    exec(command, (error, stdout, stderr) => {
-      if (error) {
-        console.error('🎵 Erreur ajout musique :', stderr);
-        return reject('Erreur ajout musique');
-      }
-      console.log('🎵 Musique ajoutée avec succès');
-      resolve(`reels/${eventId}_with_music.mp4`);
+    return new Promise((resolve, reject) => {
+      const command = `ffmpeg -i "${videoPath}" -i "${musicPath}" -shortest -c:v copy -c:a aac "${finalPath}"`;
+
+      exec(command, (error, stdout, stderr) => {
+        if (error) {
+          console.error('❌ Erreur ajout musique :', stderr);
+          return reject('Erreur ajout musique');
+        }
+        fs.unlinkSync(videoPath); // delete old video
+        fs.renameSync(finalPath, videoPath); // rename temp => original name
+  
+
+        console.log('✅ Musique ajoutée avec succès');
+        resolve(`reels/${eventId}.mp4`);
+      });
     });
-  });
-}
+  }
 
 }

@@ -18,7 +18,7 @@ export class AIService {
     @InjectModel('Preference') private preferenceModel: Model<any>,
     private configService: ConfigService
   ) {
-    this.apiKey = "sk-Xh3kl2eRQ4IiRKVFNpZWm3OyX4mmvxARpupdoErE0Xfklfwb";
+    this.apiKey = "";
     if (!this.apiKey) {
       throw new Error('La clé API ChatAnywhere est manquante !');
     }
@@ -311,8 +311,34 @@ export class AIService {
         lockedPlaces
       };
     }
-    
+
     async generateImage(prompt: string): Promise<string> {
+      try {
+        const response = await axios.post(
+'https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5',
+          { inputs: prompt },
+          {
+            headers: {
+              Authorization: `Bearer `, // ton vrai token ici
+              Accept: 'application/json',
+            },
+            responseType: 'arraybuffer', // pour récupérer l'image brute
+          }
+        );
+    
+        const imageBuffer = Buffer.from(response.data, 'binary');
+        return imageBuffer.toString('base64');
+      } catch (error) {
+        const errorMsg = error.response?.data
+          ? Buffer.from(error.response.data).toString('utf-8')
+          : error.message;
+    
+        console.error('❌ Erreur HuggingFace:', errorMsg);
+        throw new Error('Erreur lors de la génération de l’image');
+      }
+    }
+    
+    async generateImage2(prompt: string): Promise<string> {
       const response = await axios.post(
         'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2',
         { inputs: prompt },
