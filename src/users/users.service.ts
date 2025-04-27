@@ -9,6 +9,7 @@ import { CarnetService } from 'src/carnet/carnet.service';
 import { PreferencesModule } from 'src/preferences/preferences.module';
 import { Types } from 'mongoose';
 import { PreferencesService } from 'src/preferences/preferences.service';
+import { UpdateLocationDto } from './dto/update-location.dto';
 
 @Injectable()
 export class UsersService {
@@ -370,7 +371,80 @@ async removePlaceFromFavorites(userId: string, placeId: string): Promise<User> {
 
   return user;
 }
+async updateLocation(
+  userId: string,
+  dto: UpdateLocationDto,
+): Promise<User> {
+  const updateData: Partial<User> = {
+    coordinates: { lat: dto.lat, lng: dto.lng },
+    ...(dto.address && { location: dto.address }),
+    ...(dto.heading && { 
+      orientation: { 
+        heading: dto.heading, 
+        lastUpdated: new Date() 
+      } 
+    }),
+  };
 
+  // Push to history (limit to last 10 entries for performance)
+  const mongoUpdate: Record<string, any> = {
+    $set: updateData,
+    $push: {
+      locationHistory: {
+        $each: [{ lat: dto.lat, lng: dto.lng, timestamp: new Date() }],
+        $slice: -10, // Keep only the last 10 entries
+      },
+    },
+  };
+
+  return this.userModel.findByIdAndUpdate(
+    userId,
+    updateData,
+    { new: true },
+  );
+}
+
+// Get nearby users (for social AR features)
+async getNearbyUsers(
+  userId: string,
+  radiusKm: number = 1,
+): Promise<User[]> {
+  const user = await this.userModel.findById(userId);
+  if (!user?.coordinates?.lat) return [];
+
+  const earthRadiusKm = 6371;
+  const radiusRad = radiusKm / earthRadiusKm;
+
+  return this.userModel.find({
+    _id: { $ne: userId }, // Exclude self
+    'coordinates.lat': { $exists: true },
+    $expr: {
+      $lt: [
+        {
+          $acos: {
+            $add: [
+              { $multiply: [
+                { $sin: { $degreesToRadians: "$coordinates.lat" } },
+                { $sin: { $degreesToRadians: user.coordinates.lat } }
+              ] },
+              { $multiply: [
+                { $cos: { $degreesToRadians: "$coordinates.lat" } },
+                { $cos: { $degreesToRadians: user.coordinates.lat } },
+                { $cos: { 
+                  $subtract: [
+                    { $degreesToRadians: "$coordinates.lng" },
+                    { $degreesToRadians: user.coordinates.lng },
+                  ]
+                }}
+              ]}
+            ]
+          }
+        },
+        radiusRad
+      ]
+    }
+  });
+}
 
 
 

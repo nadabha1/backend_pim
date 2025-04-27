@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, UseInterceptors, UploadedFile, BadRequestException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, UseInterceptors, UploadedFile, BadRequestException, NotFoundException, InternalServerErrorException, Patch } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { User } from './entities/user.entity';
@@ -6,6 +6,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { Preference } from 'src/preferences/entities/preference.entity';
+import { UpdateLocationDto } from './dto/update-location.dto';
 
 @Controller('users')
 export class UsersController {
@@ -151,4 +152,20 @@ export class UsersController {
     const updatedUser = await this.usersService.addCoins(userId, coins);
     return { coins: updatedUser.coins };
   }
+
+  @Patch(':id/location')
+  async updateLocation(
+    @Param('id') userId: string,
+    @Body() dto: UpdateLocationDto,
+  ) {
+    return this.usersService.updateLocation(userId, dto);
+  }
+
+  // Optional: Get nearby users for social AR
+  @Get(':id/nearby')
+  async getNearbyUsers(@Param('id') userId: string) {
+    return this.usersService.getNearbyUsers(userId);
+  }
+
+
 }

@@ -1,6 +1,6 @@
 import { Controller, Post, Body, Patch } from '@nestjs/common';
 import { TripService } from './trip.service';
-
+import { Param, Get } from '@nestjs/common';
 @Controller('trip')
 export class TripController {
   constructor(private readonly tripService: TripService) {}
@@ -48,6 +48,29 @@ export class TripController {
     return {
       message: 'Day updated successfully',
       updatedItinerary: result.itinerary,
+    };
+  }
+
+
+  @Post('accept')
+  async acceptTrip(
+    @Body('userId') userId: string,
+    @Body('destination') destination: string,
+    @Body('startDate') startDate: string,
+    @Body('endDate') endDate: string,
+    @Body('itinerary') itinerary: any[],
+  ) {
+    const trip = await this.tripService.acceptTrip(
+      userId,
+      destination,
+      new Date(startDate),
+      new Date(endDate),
+      itinerary,
+    );
+
+    return {
+      tripId: trip._id,
+      message: 'Trip accepted and saved successfully',
     };
   }
 }

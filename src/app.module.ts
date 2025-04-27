@@ -21,8 +21,8 @@ import { ChatGateway } from './chat/chat.gateway';
 import { ChatModule } from './chat/chat.module';
 import { AiModule } from './ai/ai.module';
 import { AnalyseIaModule } from './analyse-ia/analyse-ia.module';
-import { TripPlanningController } from './trip/trip.controller';
-import { TripPlanningModule } from './trip/trip.module';
+import { TripModule } from './trip/trip.module';
+
 
 @Module({
   imports: [
@@ -65,7 +65,7 @@ import { TripPlanningModule } from './trip/trip.module';
     ChatModule,
     AiModule,
     AnalyseIaModule,
-    TripPlanningModule
+    TripModule
     
   ],  controllers: [AppController],
   providers: [AppService,ChatGateway],

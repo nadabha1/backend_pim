@@ -2,7 +2,9 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express'; // ✅ Importer NestExpressApplication
 import { join } from 'path';
+import * as dotenv from 'dotenv';
 
+dotenv.config();
 async function bootstrap() {
   //  Spécifier NestExpressApplication pour éviter l'erreur
   const app = await NestFactory.create<NestExpressApplication>(AppModule);

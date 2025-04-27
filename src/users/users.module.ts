@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
@@ -9,6 +9,9 @@ import { CarnetService } from 'src/carnet/carnet.service';
 import { Preference, PreferenceSchema } from 'src/preferences/entities/preference.entity';
 import { Carnet, CarnetSchema } from 'src/carnet/entities/carnet.entity';
 import { PreferencesService } from 'src/preferences/preferences.service';
+import { TripService } from 'src/trip/trip.service';
+import { Trip, TripSchema } from 'src/trip/entities/trip.entity';
+import { NotificationModule } from 'src/notification/notification.module'; // 🟢 Importer le NotificationModule ici
 
 @Module({
   imports: [
@@ -16,13 +19,12 @@ import { PreferencesService } from 'src/preferences/preferences.service';
       { name: User.name, schema: UserSchema },
       { name: Preference.name, schema: PreferenceSchema },
       { name: Carnet.name, schema: CarnetSchema },
-      
-       // ✅ Add Preference Model
+      { name: Trip.name, schema: TripSchema },
     ]),
+    forwardRef(() => NotificationModule), // 🟢 Ajouter ici pour que UsersModule connaisse NotificationService
   ],
   controllers: [UsersController],
-  providers: [UsersService,CarnetService,PreferencesService],
-  exports: [UsersService,CarnetService,MongooseModule], // Export pour utilisation dans AuthService
-
+  providers: [UsersService, CarnetService, PreferencesService, TripService],
+  exports: [UsersService, CarnetService, MongooseModule, TripService],
 })
 export class UsersModule {}
