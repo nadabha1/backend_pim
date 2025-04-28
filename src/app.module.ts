@@ -27,6 +27,7 @@ import { AgoraModule } from './agora/agora.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { ReelModule } from './reel/reel.module';
 import { MatchingModule } from './matching/matching.module';
+import { TripModule } from './trip/trip.module';
 
 
 @Module({
@@ -75,6 +76,7 @@ import { MatchingModule } from './matching/matching.module';
     CalendarModule,
     ReelModule,
     MatchingModule,
+    TripModule
 
     
   ],  controllers: [AppController],
