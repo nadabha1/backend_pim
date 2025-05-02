@@ -196,4 +196,10 @@ export class TripService {
 
     return { itinerary };
   }
+
+  async deleteTripsByUser(userId: string): Promise<void> {
+    console.log(`Deleting trips for userId: ${userId}`);
+    await this.tripModel.deleteMany({ userId });
+    console.log(`✅ Trips for userId ${userId} deleted successfully`);
+  }
 }

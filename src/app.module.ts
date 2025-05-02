@@ -21,14 +21,8 @@ import { ChatGateway } from './chat/chat.gateway';
 import { ChatModule } from './chat/chat.module';
 import { AiModule } from './ai/ai.module';
 import { AnalyseIaModule } from './analyse-ia/analyse-ia.module';
-import { ScheduleModule } from '@nestjs/schedule';
+import { UserEvent } from './user-event/entities/user-event.entity';
 import { UserEventModule } from './user-event/user-event.module';
-import { AgoraModule } from './agora/agora.module';
-import { CalendarModule } from './calendar/calendar.module';
-import { ReelModule } from './reel/reel.module';
-import { MatchingModule } from './matching/matching.module';
-import { TripModule } from './trip/trip.module';
-
 
 @Module({
   imports: [
@@ -71,13 +65,7 @@ import { TripModule } from './trip/trip.module';
     ChatModule,
     AiModule,
     AnalyseIaModule,
-    ScheduleModule.forRoot(),
-    AgoraModule,
-    CalendarModule,
-    ReelModule,
-    MatchingModule,
-    TripModule
-
+    UserEventModule,
     
   ],  controllers: [AppController],
   providers: [AppService,ChatGateway],

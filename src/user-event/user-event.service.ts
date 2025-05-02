@@ -26,6 +26,7 @@ export class UserEventService {
       throw new Error('Failed to insert user events');
     }
   }
+
   async getUserEvents(userId: string): Promise<UserEvent[]> {
     try {
       return await this.userEventModel.find({ userId }).exec();
@@ -34,5 +35,10 @@ export class UserEventService {
       throw new Error('Failed to fetch user events');
     }
   }
-  
+
+  async deleteUserEventsByUser(userId: string): Promise<void> {
+    console.log(`Deleting UserEvents for userId: ${userId}`);
+    await this.userEventModel.deleteMany({ userId });
+    console.log(`✅ UserEvents for userId ${userId} deleted successfully`);
+  }
 }

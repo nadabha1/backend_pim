@@ -25,7 +25,7 @@ export class UploadController {
     return {
       message: 'File uploaded successfully!',
       filename: file.filename,
-      url: `http://192.168.1.23:3000/uploads/${file.filename}`,
+      url: `http://localhost:3000/uploads/${file.filename}`,
     };
   }
 }

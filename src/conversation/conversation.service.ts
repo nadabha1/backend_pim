@@ -130,8 +130,8 @@ async getUserConversations(userId: string) {
   
     return await conversation.save();
   }
-  
-  
-  
-  
+
+  async deleteConversationsByUser(userId: string): Promise<void> {
+    await this.conversationModel.deleteMany({ participants: userId }).exec();
+  }
 }

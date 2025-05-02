@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ReviewService } from './review.service';
 import { ReviewController } from './review.controller';
@@ -14,13 +14,11 @@ import { UsersModule } from 'src/users/users.module';
       { name: Place.name, schema: CarnetSchema },
       { name: Carnet.name, schema: CarnetSchema },
       { name: User.name, schema: UserSchema }, // 👈 Add User model
-
     ]),
-    UsersModule,
-
+    forwardRef(() => UsersModule), // ✅ Use forwardRef to resolve circular dependency
   ],
-  providers: [ReviewService],
+  providers: [ReviewService], // ✅ Provide ReviewService
   controllers: [ReviewController],
-  exports: [ReviewService],
+  exports: [ReviewService], // ✅ Export ReviewService for use in other modules
 })
 export class ReviewModule {}

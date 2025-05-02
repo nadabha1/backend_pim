@@ -122,39 +122,44 @@ export class ReviewService {
   }
 
   // Obtenir la note moyenne d’un lieu
-async getAverageRating(placeId: string): Promise<number> {
-  return this.calculateAverageRating(placeId);
-}
-
-// Obtenir la note globale d’un carnet
-async getGlobalAverageRating(carnetId: string): Promise<number> {
-  const carnet = await this.carnetModel.findById(carnetId);
-  if (!carnet) {
-    throw new NotFoundException('Carnet not found');
-  }
-  return this.calculateGlobalAverageRating(carnet);
-}
-
-
-// Modifier un avis existant
-async editReview(placeId: string, userId: string, rating: number, comment?: string) {
-  console.log(`Editing review for placeId: ${placeId} by userId: ${userId}`);
-
-  const review = await this.reviewModel.findOne({ placeId, userId });
-  if (!review) {
-    throw new NotFoundException('Review not found');
+  async getAverageRating(placeId: string): Promise<number> {
+    return this.calculateAverageRating(placeId);
   }
 
-  review.rating = rating;
-  review.comment = comment ?? review.comment; // garde l'ancien commentaire si aucun n'est fourni
-  await review.save();
+  // Obtenir la note globale d’un carnet
+  async getGlobalAverageRating(carnetId: string): Promise<number> {
+    const carnet = await this.carnetModel.findById(carnetId);
+    if (!carnet) {
+      throw new NotFoundException('Carnet not found');
+    }
+    return this.calculateGlobalAverageRating(carnet);
+  }
 
-  console.log('Review updated:', review);
+  // Modifier un avis existant
+  async editReview(placeId: string, userId: string, rating: number, comment?: string) {
+    console.log(`Editing review for placeId: ${placeId} by userId: ${userId}`);
 
-  // Mettre à jour la moyenne des notes
-  await this.updatePlaceRating(placeId);
+    const review = await this.reviewModel.findOne({ placeId, userId });
+    if (!review) {
+      throw new NotFoundException('Review not found');
+    }
 
-  return review;
-}
+    review.rating = rating;
+    review.comment = comment ?? review.comment; // garde l'ancien commentaire si aucun n'est fourni
+    await review.save();
 
+    console.log('Review updated:', review);
+
+    // Mettre à jour la moyenne des notes
+    await this.updatePlaceRating(placeId);
+
+    return review;
+  }
+
+  // ✅ Supprimer tous les avis d'un utilisateur
+  async deleteReviewsByUser(userId: string): Promise<void> {
+    console.log(`Deleting reviews for userId: ${userId}`);
+    await this.reviewModel.deleteMany({ userId });
+    console.log(`✅ Reviews for userId ${userId} deleted successfully`);
+  }
 }

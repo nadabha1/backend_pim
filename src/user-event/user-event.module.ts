@@ -6,9 +6,10 @@ import { UserEvent, UserEventSchema } from './entities/user-event.entity';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: UserEvent.name, schema: UserEventSchema }]), // Ajoute le modèle ici
+    MongooseModule.forFeature([{ name: UserEvent.name, schema: UserEventSchema }]), // ✅ Register UserEventModel
   ],
-  providers: [UserEventService],
   controllers: [UserEventController],
+  providers: [UserEventService], // ✅ Provide UserEventService
+  exports: [UserEventService], // ✅ Export UserEventService for use in other modules
 })
 export class UserEventModule {}

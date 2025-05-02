@@ -9,6 +9,17 @@ import { CarnetService } from 'src/carnet/carnet.service';
 import { PreferencesModule } from 'src/preferences/preferences.module';
 import { Types } from 'mongoose';
 import { PreferencesService } from 'src/preferences/preferences.service';
+import { EventService } from 'src/event/event.service'; // ✅ Import EventService
+import { ChatService } from 'src/chat/chat.service'; // ✅ Import ChatService
+import { ConversationService } from 'src/conversation/conversation.service'; // ✅ Import ConversationService
+import { FollowService } from 'src/follow/follow.service'; // ✅ Import FollowService
+import { FreeTimeService } from 'src/free-times/free-times.service'; // ✅ Import FreeTimeService
+import { MessageService } from 'src/message/message.service'; // ✅ Import MessageService
+import { NotificationService } from 'src/notification/notification.service'; // ✅ Import NotificationService
+import { ReelService } from 'src/reel/reel.service'; // ✅ Import ReelService
+import { ReviewService } from 'src/review/review.service'; // ✅ Import ReviewService
+import { TripService } from 'src/trip/trip.service'; // ✅ Import TripService
+import { UserEventService } from 'src/user-event/user-event.service'; // ✅ Import UserEventService
 
 @Injectable()
 export class UsersService {
@@ -17,8 +28,18 @@ export class UsersService {
     @InjectModel(Preference.name) private preferenceModel: Model<Preference>,
     private readonly mailerService: MailerService,
     private readonly carnetService: CarnetService, 
-    private readonly preferenceService: PreferencesService,  // Adjust path as needed
-
+    private readonly preferenceService: PreferencesService,
+    private readonly eventService: EventService, 
+    private readonly chatService: ChatService, // ✅ Inject ChatService
+    private readonly conversationService: ConversationService, // ✅ Inject ConversationService
+    private readonly followService: FollowService, // ✅ Inject FollowService
+    private readonly freeTimeService: FreeTimeService, // ✅ Inject FreeTimeService
+    private readonly messageService: MessageService, // ✅ Inject MessageService
+    private readonly notificationService: NotificationService, // ✅ Inject NotificationService
+    private readonly reelService: ReelService, // ✅ Inject ReelService
+    private readonly reviewService: ReviewService, // ✅ Inject ReviewService
+    private readonly tripService: TripService, // ✅ Inject TripService
+    private readonly userEventService: UserEventService, // ✅ Inject UserEventService
   ) {}
 
   /**
@@ -195,7 +216,53 @@ async findAllWithAvailability(): Promise<User[]> {
    * ✅ Delete user and preferences
    */
   async delete(id: string): Promise<User> {
-    await this.preferenceModel.findOneAndDelete({ user: id }).exec();
+    const user = await this.userModel.findById(id);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Supprimer le carnet associé si l'utilisateur en possède un
+    if (user.carnetId) {
+      await this.carnetService.deleteCarnet(user.carnetId, id);
+    }
+
+    // Supprimer les événements créés par l'utilisateur
+    await this.eventService.deleteEventsByUser(id);
+
+    // Supprimer les chats associés à l'utilisateur
+    await this.chatService.deleteChatsByUser(id);
+
+    // Supprimer les conversations associées à l'utilisateur
+    await this.conversationService.deleteConversationsByUser(id);
+
+    // Supprimer les relations de suivi (followers et following)
+    await this.followService.deleteFollowRelationsByUser(id);
+
+    // Supprimer les plages horaires associées à l'utilisateur
+    await this.freeTimeService.deleteFreeTimesByUser(id);
+
+    // Supprimer les messages envoyés par l'utilisateur
+    await this.messageService.deleteMessagesByUser(id);
+
+    // Supprimer les notifications associées à l'utilisateur
+    await this.notificationService.deleteNotificationsByUser(id);
+
+    // Supprimer les préférences associées à l'utilisateur
+    await this.preferenceService.deletePreferencesByUser(id);
+
+    // Supprimer les reels associés à l'utilisateur
+    await this.reelService.deleteReelsByUser(id);
+
+    // Supprimer les reviews associées à l'utilisateur
+    await this.reviewService.deleteReviewsByUser(id);
+
+    // Supprimer les trips associés à l'utilisateur
+    await this.tripService.deleteTripsByUser(id);
+
+    // ✅ Supprimer les UserEvents associés à l'utilisateur
+    await this.userEventService.deleteUserEventsByUser(id);
+
+    // Supprimer l'utilisateur
     return this.userModel.findByIdAndDelete(id).exec();
   }
 
