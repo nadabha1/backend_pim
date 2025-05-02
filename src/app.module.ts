@@ -23,6 +23,7 @@ import { AiModule } from './ai/ai.module';
 import { AnalyseIaModule } from './analyse-ia/analyse-ia.module';
 import { UserEvent } from './user-event/entities/user-event.entity';
 import { UserEventModule } from './user-event/user-event.module';
+import { MatchingModule } from './matching/matching.module';
 
 @Module({
   imports: [
@@ -66,6 +67,8 @@ import { UserEventModule } from './user-event/user-event.module';
     AiModule,
     AnalyseIaModule,
     UserEventModule,
+    MatchingModule,
+    
     
   ],  controllers: [AppController],
   providers: [AppService,ChatGateway],
