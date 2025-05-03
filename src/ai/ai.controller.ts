@@ -50,7 +50,7 @@ async getPlacesBySearch(@Param('userId') userId: string) {
       const { description, title, startDate, endDate, location } = body;
     
       // Passer les informations de l'événement dans le prompt
-      const imageBase64 = await this.aiService.generateImageWithFlux(title, startDate, endDate, location);
+      const imageBase64 = await this.aiService.generateImageWithFlux(title, startDate, endDate, location, description);
     
       return { image: `data:image/png;base64,${imageBase64}` };
     }
