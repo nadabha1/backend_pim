@@ -9,6 +9,7 @@ import { CarnetService } from 'src/carnet/carnet.service';
 import { PreferencesModule } from 'src/preferences/preferences.module';
 import { Types } from 'mongoose';
 import { PreferencesService } from 'src/preferences/preferences.service';
+import { console } from 'inspector';
 
 @Injectable()
 export class UsersService {
@@ -50,6 +51,19 @@ export class UsersService {
         console.error("❌ Error creating user:", error);
         throw new InternalServerErrorException(`Error creating user: ${error.message}`);
     }
+}
+async validateOtp(email: string, otp: string): Promise<boolean> {
+  const user = await this.userModel.findOne({ email });
+
+  if (!user) return false;
+
+  // Check if the OTP matches
+  if (user.resetPasswordOtp !== otp) return false;
+
+  // Optional: Check expiration (if you store otpExpiration)
+  if (user.resetPasswordOtpExpires && user.resetPasswordOtpExpires < new Date()) return false;
+
+  return true;
 }
 async findAllExceptCreator(creatorId: string) {
   return await this.userModel.find({ _id: { $ne: creatorId } });
@@ -203,7 +217,8 @@ async findAllWithAvailability(): Promise<User[]> {
    * ✅ Forgot Password (OTP)
    */
   async forgotPassword(email: string): Promise<string> {
-    const user = await this.userModel.findOne({ email });
+    console.log('Received email for password reset:', email);
+    const user = await this.userModel.findOne({ email :email });
     if (!user) {
       throw new NotFoundException('User not found');
     }
