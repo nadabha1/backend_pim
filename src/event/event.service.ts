@@ -70,7 +70,7 @@ export class EventService {
       senderId: creatorId,
       recipientId: creatorId,
       type: NotificationType.NEW_Event,
-      content: `Votre événement "${title}" a été créé avec succès.`,
+      content: `Great! Your event "${title}" has been created!`,
       data: { eventId: savedEvent._id.toString() },
     });
 
@@ -82,7 +82,7 @@ export class EventService {
         senderId: creatorId,
         recipientId: user._id.toString(),
         type: NotificationType.NEW_EVENT_All,
-        content: `Un nouvel événement "${title}" a été créé. Découvrez-le vite !`,
+        content: `Don't miss it! The new event "${title}" is here!`,
         data: { eventId: savedEvent._id.toString() },
       });
     }

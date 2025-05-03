@@ -89,7 +89,7 @@ async getUserConversations(userId: string) {
         senderId: userId,
         recipientId: otherUserId,
         type: NotificationType.MESSAGE,
-        content: `Vous avez une nouvelle conversation avec ${sender.name}.`, // 🟢 Utiliser le nom ici
+        content: `Say hi! You have a new conversation with ${sender.name}.`, // 🟢 Utiliser le nom ici
         data: { conversationId: conversation._id.toString() } // 🟢 Inclure l’ID de la conversation
       });
     }
@@ -114,7 +114,7 @@ async getUserConversations(userId: string) {
       senderId: userId,
       recipientId: otherUserId,
       type: NotificationType.MESSAGE,
-      content: `Vous avez une nouvelle conversation avec ${userId}.`,
+      content: `Say hi! You have a new conversation with ${userId}.`,
     });
     
       

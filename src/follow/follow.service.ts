@@ -30,7 +30,7 @@ export class FollowService {
             senderId: followerId,
             recipientId: followingId.toString(),
             type: NotificationType.FOLLOW,
-            content: 'Vous avez un nouveau follower!',
+            content: 'Guess what? You’ve got a new follower!',
             data: { followerId: followerId.toString() },
           });
     return { message: 'Follow successful' };
