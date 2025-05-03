@@ -118,4 +118,9 @@ export class PreferencesService {
     }
     return { message: `Preference with ID ${id} has been deleted` };
   }
+
+  // Suppression des préférences associées à un utilisateur
+  async deletePreferencesByUser(userId: string): Promise<void> {
+    await this.preferenceModel.deleteOne({ user: userId }).exec();
+  }
 }

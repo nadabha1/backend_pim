@@ -7,6 +7,8 @@ export type UserDocument = User & Document;
 
 @Schema()
 export class User extends Document {
+  
+  
     @Prop({ required: true })
     name: string;
   
@@ -63,7 +65,16 @@ searchHistory: string[]; // ex : ["café", "plage", "shopping"]
 tags: string[];
 @Prop({ type: [{ start: String, end: String }] })
 availability: { start: string; end: string }[];
-
+@Prop({
+    type: [
+      {
+        activities: { type: [String], default: [] }, // Activities for each day
+      },
+    ],
+    default: [],
+  })
+  itinerary: { activities: string[] }[]; // Array of days with activities
+  
 
 }
 

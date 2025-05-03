@@ -25,60 +25,6 @@ export class ReelService {
   async saveReel(data: { eventId: string; userId: string; mediaUrls: string[] , isShared: boolean }): Promise<ReelMedia> {
     return await this.reelModel.create(data);
   }
- /* async generateReel(eventId: string): Promise<string> {
-    const reel = await this.reelModel.findOne({ eventId });
-    if (!reel || reel.mediaUrls.length === 0) {
-      throw new Error('Aucune image trouvée');
-    }
-  
-    const outputDir = path.join(__dirname, '../../public/reels');
-    const outputPath = path.join(outputDir, `${eventId}.mp4`);
-  
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
-    }
-  
-    const inputs: string[] = [];
-    const durationPerImage = 3; // secondes
-  
-    // Créer un fichier .txt pour concaténation
-    const concatFile = path.join(__dirname, '../../uploads/reels/concat.txt');
-    const fileLines = reel.mediaUrls.map((imgPath) => {
-      const absolutePath = path.resolve(__dirname, '../../', imgPath);
-      if (!fs.existsSync(absolutePath)) {
-        throw new Error(`Image introuvable : ${absolutePath}`);
-      }
-      return `file '${absolutePath.replace(/\\/g, '/')}'\nduration ${durationPerImage}`;
-    });
-  
-    // Ajouter la dernière image sans durée
-    const lastImage = path.resolve(__dirname, '../../', reel.mediaUrls[reel.mediaUrls.length - 1]);
-    fileLines.push(`file '${lastImage.replace(/\\/g, '/')}'`);
-  
-    fs.writeFileSync(concatFile, fileLines.join('\n'));
-  
-    return new Promise((resolve, reject) => {
-      fluentFfmpeg()
-        .input(concatFile)
-        .inputOptions(['-f', 'concat', '-safe', '0'])
-        .outputOptions([
-          '-vf', "scale=1280:720", // resize optionnel
-          '-pix_fmt', 'yuv420p',
-          '-r', '30',
-        ])
-        .on('start', (cmd) => console.log('🎬 Start FFmpeg:', cmd))
-        .on('end', () => {
-          console.log('✅ Vidéo générée :', outputPath);
-          resolve(`reels/${eventId}.mp4`);
-        })
-        .on('error', (err) => {
-          console.error('❌ FFmpeg error:', err.message);
-          reject(new Error('Erreur génération vidéo'));
-        })
-        .save(outputPath);
-    });
-  }
-  */
   
   // 🧪 Option B (rarement utile ici) : génération via globbing
   async findReelsByEvent(eventId: string) {
@@ -176,6 +122,10 @@ export class ReelService {
         resolve(`reels/${eventId}.mp4`);
       });
     });
+  }
+
+  async deleteReelsByUser(userId: string): Promise<void> {
+    await this.reelModel.deleteMany({ userId }).exec();
   }
 
 }

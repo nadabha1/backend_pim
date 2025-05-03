@@ -81,5 +81,11 @@ export class FollowService {
     };
   }
 
+  async deleteFollowRelationsByUser(userId: string): Promise<void> {
+    // Supprimer les relations où l'utilisateur est un follower
+    await this.followModel.deleteMany({ follower: userId }).exec();
 
+    // Supprimer les relations où l'utilisateur est un following
+    await this.followModel.deleteMany({ following: userId }).exec();
+  }
 }

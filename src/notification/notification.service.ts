@@ -60,4 +60,12 @@ export class NotificationService {
         isRead: false,
       });
     }
+
+    async deleteNotificationsByUser(userId: string): Promise<void> {
+      // Supprimer les notifications où l'utilisateur est l'expéditeur
+      await this.notificationModel.deleteMany({ sender: userId }).exec();
+
+      // Supprimer les notifications où l'utilisateur est le destinataire
+      await this.notificationModel.deleteMany({ recipient: userId }).exec();
+    }
 }

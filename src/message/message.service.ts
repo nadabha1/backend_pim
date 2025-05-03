@@ -64,6 +64,8 @@ export class MessageService {
   
     return await message.save();
   }
-  
-  
+
+  async deleteMessagesByUser(userId: string): Promise<void> {
+    await this.messageModel.deleteMany({ sender: userId }).exec();
+  }
 }

@@ -54,5 +54,8 @@ export class FreeTimeService {
     const userObjectId = new Types.ObjectId(userId);
     return this.freeTimeModel.find({ userId: userObjectId }).exec();
   }
-  
+
+  async deleteFreeTimesByUser(userId: string): Promise<void> {
+    await this.freeTimeModel.deleteMany({ userId }).exec();
+  }
 }

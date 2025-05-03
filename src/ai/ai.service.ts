@@ -393,13 +393,20 @@ export class AIService {
         );
       }
     }*/
-      async generateImageWithFlux(eventTitle: string, startDate: string, endDate: string, location: string): Promise<string> {
+      async generateImageWithFlux(
+        eventTitle: string,
+        startDate: string,
+        endDate: string,
+        location: string,
+        description: string, // ajout de la description ici
+      ): Promise<string> {
         const formData = new URLSearchParams();
-        
-        // Adapter le prompt pour inclure les détails de l'événement
-        const prompt = `Créer une affiche artistique et colorée pour l'événement: ${eventTitle}. 
-                        L'événement aura lieu à ${location} du ${startDate} au ${endDate}. 
-                        Affiche verticale, ambiance festive, style graphique moderne.`;
+      
+        // Création du prompt avec tous les éléments pertinents
+        const prompt = `Créer une affiche verticale pour un événement intitulé "${eventTitle}".
+                        Description : ${description}
+                        L'événement aura lieu à ${location}, du ${startDate} au ${endDate}.
+                        Style : ambiance festive, couleurs vives, design graphique moderne et attrayant.`;
       
         formData.append('prompt', prompt);
         formData.append('width', '1024');
@@ -426,7 +433,6 @@ export class AIService {
             throw new HttpException(`Erreur API Flux: ${errorText}`, response.status);
           }
       
-          // Lire le contenu binaire de l’image directement
           const arrayBuffer = await response.arrayBuffer();
           const buffer = Buffer.from(arrayBuffer);
       

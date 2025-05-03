@@ -17,7 +17,7 @@ import { User, UserSchema } from 'src/users/entities/user.entity';
     forwardRef(() => NotificationModule),  // ✅ Utiliser forwardRef
   ],
   controllers: [ConversationController],
-  providers: [ConversationService],
-  exports: [ConversationService, MongooseModule],  // ✅ Exporter MongooseModule
+  providers: [ConversationService], // ✅ Ensure ConversationService is provided
+  exports: [ConversationService, MongooseModule], // ✅ Export ConversationService
 })
 export class ConversationModule {}
