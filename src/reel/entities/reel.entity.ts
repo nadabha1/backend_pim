@@ -8,6 +8,8 @@ export class ReelMedia extends Document {
   @Prop({ required: true }) eventId: string;
   @Prop([String]) mediaUrls: string[];
   @Prop({ default: false,required: false }) isShared: boolean;  // ✅ nouveau champ
+  @Prop({ default: false,required: false }) // ✅ nouveau champ facultatif
+  music?: string;
 }
 
 export const ReelMediaSchema = SchemaFactory.createForClass(ReelMedia);

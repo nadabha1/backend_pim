@@ -1,4 +1,4 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, Inject, forwardRef, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Types } from 'mongoose';
@@ -158,7 +158,7 @@ export class EventService {
     if (!event.participants.includes(userObjectId)) {
       const user = await this.userModel.findById(userObjectId);
       if (!user || user.coins < event.joinPrice) {
-        throw new Error('Insufficient coins');
+        throw new HttpException('Insufficient coins', HttpStatus.BAD_REQUEST); // ou 402
       }
       event.participants.push(userObjectId);
       user.coins -= event.joinPrice;

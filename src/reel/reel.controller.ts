@@ -21,9 +21,14 @@ import { ReelService } from './reel.service';
 export class ReelController {
   constructor(private readonly reelsService: ReelService) {}
 
-  @Post('upload')
+// ✅ reel.controller.ts
+
+@Post('upload')
 @UseInterceptors(
-  FileFieldsInterceptor([{ name: 'files', maxCount: 10 }], {
+  FileFieldsInterceptor([
+    { name: 'files', maxCount: 10 },
+    { name: 'music', maxCount: 1 }
+  ], {
     storage: diskStorage({
       destination: './uploads/reels',
       filename: (req, file, cb) => {
@@ -37,12 +42,21 @@ async uploadReel(
   @Body('eventId') eventId: string,
   @Body('userId') userId: string,
   @Body('isShared') isShared: boolean,
-  @UploadedFiles() files: { files?: Express.Multer.File[] },
+  @UploadedFiles() files: { files?: Express.Multer.File[], music?: Express.Multer.File[] },
 ) {
-  console.log('upload started   Event ID:', eventId);
-  const urls = files.files.map(file => `uploads/reels/${file.filename}`);
-  return this.reelsService.saveReel({ eventId, userId, mediaUrls: urls, isShared });
+  console.log('🟢 Reçu:', { eventId, userId, isShared });
+  const imageUrls = files.files.map(file => `uploads/reels/${file.filename}`);
+  const musicFilename = files.music?.[0]?.filename;
+
+  return this.reelsService.saveReel({
+    eventId,
+    userId,
+    mediaUrls: imageUrls,
+    isShared,
+    music: musicFilename || null,
+  });
 }
+
 
 
  /* @Post('generate/:eventId')
