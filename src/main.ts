@@ -6,6 +6,10 @@ import * as express from 'express';
 import * as path from 'path';
 
 // src/main.ts
+// src/main.ts
+import * as crypto from 'crypto';
+import { exec } from 'child_process';
+(globalThis as any).crypto = crypto;
 
 async function bootstrap() {
   //  Spécifier NestExpressApplication pour éviter l'erreur

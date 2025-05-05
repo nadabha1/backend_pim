@@ -330,6 +330,17 @@ async getPlacesByCategories(categories: string[]): Promise<Place[]> {
     place.categories.some(category => categories.includes(category))
   );
 }
+async getTotalRatingForTraveler(userId: string): Promise<number> {
+  const carnet = await this.carnetModel.findOne({ owner: userId }).exec();
+  if (!carnet || carnet.places.length === 0) {
+    return 0;
+  }
+
+  const total = carnet.places.reduce((sum, place) => sum + (place.averageRating || 0), 0);
+  const average = total / carnet.places.length;
+  return parseFloat(average.toFixed(2)); // arrondi à 2 chiffres
+}
+
 async updateGlobalRating(carnetId: string) {
   const carnet = await this.carnetModel.findById(carnetId).populate('places').exec();
   if (!carnet) {

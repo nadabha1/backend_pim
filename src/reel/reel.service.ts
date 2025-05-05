@@ -22,10 +22,18 @@ export class ReelService {
   }
 
   // 📸 Étape 1 : Sauvegarde des fichiers image associés à un événement
-  async saveReel(data: { eventId: string; userId: string; mediaUrls: string[] , isShared: boolean }): Promise<ReelMedia> {
-    return await this.reelModel.create(data);
-  }
-  
+  // ✅ reel.service.ts
+
+async saveReel(data: {
+  eventId: string;
+  userId: string;
+  mediaUrls: string[];
+  isShared: boolean;
+  music?: string | null;
+}): Promise<ReelMedia> {
+  return await this.reelModel.create(data);
+}
+
   // 🧪 Option B (rarement utile ici) : génération via globbing
   async findReelsByEvent(eventId: string) {
     if (!eventId) throw new Error('Event ID manquant');
@@ -40,7 +48,6 @@ export class ReelService {
   
     const outputDir = path.join(__dirname, '../../public/reels');
     const outputPath = path.join(outputDir, `${eventId}_${userId}.mp4`);
-  
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
@@ -50,33 +57,42 @@ export class ReelService {
       const absolutePath = path.resolve(__dirname, '../../', imgPath);
       return `file '${absolutePath.replace(/\\/g, '/')}'\nduration 3`;
     });
-  
     const lastImage = path.resolve(__dirname, '../../', reel.mediaUrls[reel.mediaUrls.length - 1]);
     fileLines.push(`file '${lastImage.replace(/\\/g, '/')}'`);
-  
     fs.writeFileSync(concatFile, fileLines.join('\n'));
   
+    // ✅ Traitement musique (optionnel)
+    const hasMusic = reel.music && fs.existsSync(path.join(__dirname, '../../uploads/reels', reel.music));
+    const musicPath = hasMusic ? path.join(__dirname, '../../uploads/reels', reel.music) : null;
+  
     return new Promise((resolve, reject) => {
-      fluentFfmpeg()
+      let command = fluentFfmpeg()
         .input(concatFile)
         .inputOptions(['-f', 'concat', '-safe', '0'])
         .outputOptions([
           '-vf', 'scale=1280:720',
           '-pix_fmt', 'yuv420p',
           '-r', '30',
-        ])
-        .on('start', (cmd) => console.log('🎬 Start FFmpeg:', cmd))
+        ]);
+  
+      if (hasMusic) {
+        command = command.input(musicPath!).outputOptions(['-shortest']);
+      }
+  
+      command
+        .on('start', cmd => console.log('🎬 FFmpeg CMD:', cmd))
         .on('end', () => {
-          console.log('✅ Vidéo générée :', outputPath);
+          console.log('✅ Vidéo générée:', outputPath);
           resolve(`reels/${eventId}_${userId}.mp4`);
         })
-        .on('error', (err) => {
+        .on('error', err => {
           console.error('❌ FFmpeg error:', err.message);
           reject(new Error('Erreur génération vidéo'));
         })
         .save(outputPath);
     });
   }
+  
   
   async generateVideo(eventId: string): Promise<string> {
     const inputDir = path.join(__dirname, '../../uploads/reels', eventId);
