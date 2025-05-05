@@ -1,5 +1,7 @@
-file 'G:/nada/4SIM2/PIM/backend_pim/uploads/reels/f1669cc1-a5a1-40cb-a285-497f46764664.jpg'
+file '/Users/salma/Desktop/backend_pim/uploads/reels/8a5b7a83-b1e1-49cc-9a7b-5bf52cecf66b.jpg'
 duration 3
-file 'G:/nada/4SIM2/PIM/backend_pim/uploads/reels/a19cb712-e936-4bc5-be84-d8286c64c0d9.jpg'
+file '/Users/salma/Desktop/backend_pim/uploads/reels/6aa3b404-4cb6-4e5a-b151-7af4c2aae4b4.jpg'
 duration 3
-file 'G:/nada/4SIM2/PIM/backend_pim/uploads/reels/a19cb712-e936-4bc5-be84-d8286c64c0d9.jpg'
+file '/Users/salma/Desktop/backend_pim/uploads/reels/a6c34f4b-ac5d-4c88-81c0-bd42c35934d5.jpg'
+duration 3
+file '/Users/salma/Desktop/backend_pim/uploads/reels/a6c34f4b-ac5d-4c88-81c0-bd42c35934d5.jpg'

@@ -73,4 +73,8 @@ export class TripController {
       message: 'Trip accepted and saved successfully',
     };
   }
+  @Get('accepted/:userId')
+async getAcceptedTrips(@Param('userId') userId: string) {
+  return this.tripService.getAcceptedTrips(userId);
+}
 }

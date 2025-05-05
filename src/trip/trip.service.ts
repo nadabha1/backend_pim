@@ -202,4 +202,9 @@ export class TripService {
     await this.tripModel.deleteMany({ userId });
     console.log(`✅ Trips for userId ${userId} deleted successfully`);
   }
+
+  async getAcceptedTrips(userId: string): Promise<Trip[]> {
+    return this.tripModel.find({ userId, status: 'accepted' }).sort({ startDate: 1 }).exec();
+  }
+
 }
