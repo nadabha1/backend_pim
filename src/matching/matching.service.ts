@@ -35,13 +35,23 @@ export class MatchingService {
         return {
           id: other._id.toString(),
           name: other.name,
+          profileImage: other.profileImage,
           tags: profile, // ← utilisé dans le modèle Python
         };
       })
     );
 
     const result = await this.matchUsers(userProfile, candidates);
-    let filteredResult = result.filter(match => match.score > 0.5);
+    // 🔁 Reprendre la photo de profil depuis les candidats originaux
+let enrichedResult = result.map(match => {
+  const original = candidates.find(c => c.id === match.id);
+  return {
+    ...match,
+    profileImage: original?.profileImage || null,
+  };
+});
+
+    let filteredResult = enrichedResult.filter(match => match.score > 0.5);
     if (filteredResult.length === 0) {
       // Sort by highest score
       filteredResult = result
