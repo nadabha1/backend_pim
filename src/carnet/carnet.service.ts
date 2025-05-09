@@ -20,12 +20,22 @@ async addPlace(carnetId: string, placeData: any): Promise<Carnet> {
   console.log(`Place Data Received:`, placeData);
 
   carnet.places.push(placeData);
+   // Reward creator with 10 coins
+   const creatorObjectId = carnet.owner; // Assuming 'owner' field in 'carnet' holds the creator's ObjectId
+   const user = await this.userModel.findById(creatorObjectId);
+   if (user) {
+     user.coins = (user.coins || 0) + 5;
+     await user.save();
+   } else {
+     throw new Error('Creator not found');
+   }
   
   return await carnet.save();
 }
 
   async createCarnet(data: any): Promise<Carnet> {
     const newCarnet = new this.carnetModel(data);
+   
     return newCarnet.save();
   }
  /* async unlockPlace(userId: string, carnetId: string, placeIndex: number): Promise<any> {
@@ -84,7 +94,14 @@ async addPlace(carnetId: string, placeData: any): Promise<Carnet> {
     console.log("Creating a new carnet...");
     const newCarnet = new this.carnetModel({ title, owner: userId, places: [] });
     await newCarnet.save();
-  
+   // Reward creator with 10 coins
+   const creatorObjectId = user; // Assuming 'owner' field in 'data' holds the creator's ObjectId
+   if (user) {
+     user.coins = (user.coins || 0) + 10;
+     await user.save();
+   } else {
+     throw new Error('Creator not found');
+   }
     user.carnetId = newCarnet.id;
     await user.save();
     console.log(`Carnet created successfully for user ${userId}`);

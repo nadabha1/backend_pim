@@ -61,7 +61,7 @@ export class EventService {
     // Reward creator with 10 coins
     const user = await this.userModel.findById(creatorObjectId);
     if (user) {
-      user.coins = (user.coins || 0) + 10;
+      user.coins = (user.coins || 0) + 5;
       await user.save();
     } else {
       throw new Error('Creator not found');
@@ -279,21 +279,22 @@ export class EventService {
     const userEvents = await this.eventModel.find({
       $or: [{ creatorId: userId }, { participants: userId }],
     });
-  
+
     console.log(`📌 Events for user ${userId}:`, userEvents);
-  
+
     const conflictingEventIds = userEvents.map(event => event._id);
-  
+
     const nonConflictingEvents = await this.eventModel.find({
-      _id: { $nin: conflictingEventIds },
       $or: [
+        { _id: { $nin: conflictingEventIds } }, // Events not in conflict
+        { participants: userId }, // Include events the user has already joined
         { startDate: { $gte: new Date() } },
         { endDate: { $gte: new Date() } },
       ],
     });
-  
+
     console.log(`✅ Non-conflicting events found:`, nonConflictingEvents);
-  
+
     return nonConflictingEvents;
   }
 
