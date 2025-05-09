@@ -315,4 +315,8 @@ export class EventService {
       await this.eventModel.findByIdAndDelete(event._id);
     }
   }
+
+  async getEventsCreatedByUser(userId: string): Promise<Event[]> {
+    return this.eventModel.find({ creatorId: new Types.ObjectId(userId) }).exec();
+  }
 }

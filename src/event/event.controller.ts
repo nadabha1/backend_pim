@@ -116,5 +116,9 @@ async getNonConflictingEvents(@Param('userId') userId: string) {
   return this.eventService.findNonConflictingEvents(new Types.ObjectId(userId));
 }
 
+@Get('created-by/:userId')
+async getCreatedByUser(@Param('userId') userId: string) {
+  return await this.eventService.getEventsCreatedByUser(userId);
+}
 
 }
