@@ -72,6 +72,11 @@ export class UsersController {
   async findById(@Param('id') id: string): Promise<User> {
     return this.usersService.findById(id);
   }
+  @Get(':userId/public-profile')
+async getPublicProfile(@Param('userId') userId: string) {
+  return this.usersService.getPublicProfile(userId);
+}
+
   @Post('checkverification')
   async checkVerification(@Body('email') email: string) {
       const user = await this.usersService.findByEmail(email);

@@ -64,6 +64,8 @@ export class FollowService {
     return followers.map((f) => f.follower.toString());  // Convert ObjectId to string
   }
 
+  
+
   // ✅ Get list of following (returning IDs)
   async getFollowing(userId: string): Promise<string[]> {
     const following = await this.followModel.find({ follower: userId });

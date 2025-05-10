@@ -225,7 +225,29 @@ async findAllWithAvailability(): Promise<User[]> {
 
     return updatedPreferences;
   }
-
+  async getPublicProfile(userId: string): Promise<any> {
+    const user = await this.userModel.findById(userId).lean();
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+  
+    const followersCount = await this.followService.getFollowersCount(userId);
+  
+    const carnet = await this.carnetService.getCarnetByUserId(userId);
+    const rating = carnet?.globalAverageRating ?? 0;
+  
+    return {
+      name: user.name,
+      bio: user.bio,
+      job: user.job,
+      location: user.location,
+      profileImage: user.profileImage,
+      tags: user.tags,
+      followersCount,
+      rating,
+    };
+  }
+  
   /**
    * ✅ Delete user and preferences
    */

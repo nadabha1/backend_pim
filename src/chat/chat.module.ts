@@ -15,6 +15,6 @@ import { MessageModule } from 'src/message/message.module'; // ✅ Import Messag
   ],
   controllers: [ChatController],
   providers: [ChatGateway, ChatService],
-  exports: [ChatService, MongooseModule],
+  exports: [ChatService, MongooseModule,ChatGateway],
 })
 export class ChatModule {}
