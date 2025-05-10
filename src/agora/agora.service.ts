@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
 import * as agora from 'agora-access-token';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class AgoraService {
@@ -7,7 +9,13 @@ export class AgoraService {
   private readonly appId: string = '6d5a203e2d024f2c92c9e9f44bc37390';  // Remplacez par votre App ID
   private readonly appCertificate: string = '193dafab8f4041839efb17749d86c7b5';  // Remplacez par votre certificat App
 
-  constructor() {}
+
+
+  constructor(
+   
+  ) {}
+
+ 
 
   /**
    * Génère un token pour un utilisateur pour rejoindre un canal
@@ -30,4 +38,5 @@ export class AgoraService {
 
     return token;
   }
+ 
 }

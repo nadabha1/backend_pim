@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, NotFoundException, Delete } from '@nestjs/common';
 import { AgoraService } from './agora.service';
 
 @Controller('agora')
@@ -22,4 +22,6 @@ export class AgoraController {
     const userRole = role === 'PUBLISHER' ? 'PUBLISHER' : 'SUBSCRIBER';
     return this.agoraService.generateToken(channelName, uid, userRole);
   }
+ 
+
 }

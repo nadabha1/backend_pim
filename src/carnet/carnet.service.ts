@@ -20,7 +20,7 @@ async addPlace(carnetId: string, placeData: any): Promise<Carnet> {
   console.log(`Place Data Received:`, placeData);
 
   carnet.places.push(placeData);
-   // Reward creator with 10 coins
+   // Reward creator with 5 coins
    const creatorObjectId = carnet.owner; // Assuming 'owner' field in 'carnet' holds the creator's ObjectId
    const user = await this.userModel.findById(creatorObjectId);
    if (user) {
