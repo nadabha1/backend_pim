@@ -1,3 +1,4 @@
+import { forwardRef, Inject } from '@nestjs/common';
 import {
   WebSocketGateway,
   WebSocketServer,
@@ -17,8 +18,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  constructor(private readonly messageService: MessageService) {}
-
+  constructor(
+    @Inject(forwardRef(() => MessageService))
+    private readonly messageService: MessageService,
+  ) {}
   handleConnection(client: Socket) {
     console.log(`✅ [BACKEND] Client connecté : ${client.id}`);
   }
@@ -34,8 +37,8 @@ async handleMessage(client: Socket, payload: any) {
     console.log("⚠️ [BACKEND] Payload est undefined !");
     return;
   }
+  const { conversationId, senderId, content, eventId, type } = payload?.data || payload;
 
-  const { conversationId, senderId, content } = payload?.data || payload;
 
   if (!conversationId || !senderId || !content) {
     console.log("⚠️ [BACKEND] Données manquantes ou invalides :", payload);
@@ -43,11 +46,6 @@ async handleMessage(client: Socket, payload: any) {
   }
 
   try {
-    const message = await this.messageService.createMessage(conversationId, senderId, content);
-    console.log("✅ [BACKEND] Message sauvegardé dans la BDD :", message);
-
-    // ✅ Vérifie cette ligne !
-    this.server.to(conversationId).emit('receiveMessage', message);
     console.log("📤 [BACKEND] Message diffusé à la room :", conversationId);
   } catch (error) {
     console.log("❌ [BACKEND] Erreur lors de l'enregistrement du message :", error.message);

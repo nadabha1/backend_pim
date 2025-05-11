@@ -1,13 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Message } from './entities/message.entity';
 import { Model } from 'mongoose';
+import { ChatGateway } from 'src/chat/chat.gateway';
+import { Conversation } from 'src/conversation/entities/conversation.entity';
 
 @Injectable()
 export class MessageService {
   constructor(@InjectModel(Message.name) private messageModel: Model<Message>,
+  @InjectModel(Conversation.name) private conversationModel: Model<Conversation>,
+  @Inject(forwardRef(() => ChatGateway))
+  private readonly notificationGateway: ChatGateway,
+  
 ) {}
 
   async createMessage(conversationId: string, senderId: string, content: string,  eventId?: string, type?: string
@@ -20,9 +26,15 @@ export class MessageService {
       type: type ?? null,
     
     });
+    const masage = await message.save();
+    this.notificationGateway.server.to(conversationId).emit('newMessage', masage);
 
-
-    return await message.save();
+    
+    await this.conversationModel.findByIdAndUpdate(conversationId, {
+      lastMessage: masage._id,
+      updatedAt: new Date(), // optional: also update last activity
+    });
+return masage; // Retourne le message créé
   }
 
   async getMessages(conversationId: string) {
@@ -31,7 +43,7 @@ export class MessageService {
       .populate({
         path: 'sender', 
         model:'User',
-        select: 'name' // Ajoute avatarUrl pour éviter le crash
+        select: 'name profileImage' 
       })
       .exec();
   }
@@ -40,7 +52,7 @@ export class MessageService {
     return this.messageModel
       .find({ conversation: conversationId })
       .sort({ createdAt: 1 })
-      .populate('sender', 'name')  // 🔄 Utiliser `populate` pour obtenir le nom de l'utilisateur
+      .populate('sender', 'name profileImage')  // 🔄 Utiliser `populate` pour obtenir le nom de l'utilisateur
       .exec();
   }
   async getMessagesForUser(userId: string) {

@@ -20,7 +20,7 @@ async getUserConversationsname(userId: string) {
     .populate({
         path: 'participants', 
         model:'User',
-        select: 'name' // Ajoute avatarUrl pour éviter le crash
+        select: 'name profileImage' // Ajoute avatarUrl pour éviter le crash
       })
     .exec();
 
@@ -28,18 +28,22 @@ async getUserConversationsname(userId: string) {
   return conversations;
 }
 async getUserConversations(userId: string) {
+
   const conversations = await this.conversationModel
     .find({ participants: { $in: [userId] } }) // Recherche les conversations où userId est un participant
     .populate({
       path: 'participants', 
       model: 'User',
-      select: 'name ' // Sélectionne les informations nécessaires pour les participants
+      select: 'name profileImage' // Sélectionne les informations nécessaires pour les participants
     })
     .populate({
       path: 'lastMessage',
-      select: 'content createdAt'
+      select: 'content createdAt',
+      options: { sort: { createdAt: -1 } }, // this sorts messages inside populate (useful if lastMessage is ref array, optional)
     })
-    .exec();
+    .sort({ 'lastMessage.createdAt': -1 }) // 🔥 sort by most recent message
+    .exec()
+    
 
   console.log("Conversations trouvées:", JSON.stringify(conversations, null, 2)); // Log pour debug
   return conversations;
@@ -58,7 +62,7 @@ async getUserConversations(userId: string) {
   }  async addUserToConversation(conversationId: string, userId: string) {
     await this.conversationModel.updateOne(
         { _id: new Types.ObjectId(conversationId) },
-        { $addToSet: { participants: new Types.ObjectId(userId) } }  // ✅ Empêche les doublons
+        { $addToSet: { participants: userId } }  // ✅ Empêche les doublons
     );
 }
      // ✅ Cherche une conversation par son titre
