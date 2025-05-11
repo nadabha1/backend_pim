@@ -22,7 +22,7 @@ export class TripService {
     @InjectModel(Trip.name) private readonly tripModel: Model<Trip>,
 
   ) {
-    const API_KEY = 'AIzaSyC3N17AV58VKTBSVQhr_6TP9bDYIMJ7eo0';
+    const API_KEY = 'AIzaSyDqaskWKGfwnk6LuNroZHnbOlp1-jV6n2M';
     this.genAI = new GoogleGenerativeAI(API_KEY);
     this.model = this.genAI.getGenerativeModel({
       model: 'gemini-1.5-pro-latest',
