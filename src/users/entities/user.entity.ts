@@ -36,6 +36,7 @@ export class User extends Document {
     
     @Prop({ default: '' }) 
     profileImage: string;
+    
 
  
 
