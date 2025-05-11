@@ -120,5 +120,13 @@ async getNonConflictingEvents(@Param('userId') userId: string) {
 async getCreatedByUser(@Param('userId') userId: string) {
   return await this.eventService.getEventsCreatedByUser(userId);
 }
+@Patch(':eventId/leave')
+async leaveEvent(
+  @Param('eventId') eventId: string,
+  @Body('userId') userId: string,
+) {
+  return this.eventService.leaveEvent(eventId, userId);
+}
+
 
 }

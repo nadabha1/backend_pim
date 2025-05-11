@@ -319,4 +319,38 @@ export class EventService {
   async getEventsCreatedByUser(userId: string): Promise<Event[]> {
     return this.eventModel.find({ creatorId: new Types.ObjectId(userId) }).exec();
   }
+
+  async leaveEvent(eventId: string, userId: string) {
+    const eventObjectId = Types.ObjectId.createFromHexString(eventId);
+    const userObjectId = Types.ObjectId.createFromHexString(userId);
+  
+    const event = await this.eventModel.findById(eventObjectId);
+    if (!event) throw new Error('Event not found');
+  
+    // Vérifie si l'utilisateur fait bien partie des participants
+    const index = event.participants.findIndex(p => p.equals(userObjectId));
+    if (index === -1) {
+      throw new HttpException('User is not a participant of this event', HttpStatus.BAD_REQUEST);
+    }
+  
+    // Retire l'utilisateur de la liste des participants
+    event.participants.splice(index, 1);
+    await event.save();
+  
+   /* // Optionnel : remboursement des coins
+    const user = await this.userModel.findById(userObjectId);
+    if (user) {
+      user.coins += event.joinPrice;
+      await user.save();
+    }*/
+  
+    // Supprimer l'utilisateur de la conversation liée à l'événement
+    const conversation = await this.conversationService.findConversationByTitle(event.title);
+    if (conversation) {
+      await this.conversationService.removeUserFromConversation(conversation._id.toString(), userId);
+    }
+  
+    return { message: 'Successfully left the event' };
+  }
+  
 }

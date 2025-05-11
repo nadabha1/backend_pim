@@ -134,4 +134,35 @@ async getUserConversations(userId: string) {
   async deleteConversationsByUser(userId: string): Promise<void> {
     await this.conversationModel.deleteMany({ participants: userId }).exec();
   }
+
+  async removeUserFromConversation(conversationId: string, userId: string) {
+    const conversation = await this.conversationModel.findById(conversationId);
+    if (!conversation) {
+      throw new BadRequestException('Conversation not found');
+    }
+  
+    // Vérifie que l'utilisateur fait partie des participants
+    const isParticipant = conversation.participants.some(participant =>
+      participant.toString() === userId
+    );
+  
+    if (!isParticipant) {
+      throw new BadRequestException('User is not part of this conversation');
+    }
+  
+    // Retire l'utilisateur de la conversation
+    conversation.participants = conversation.participants.filter(
+      participant => participant.toString() !== userId
+    );
+  
+    // Si la conversation n’a plus de participants, tu peux décider de la supprimer
+    if (conversation.participants.length === 0) {
+      await this.conversationModel.findByIdAndDelete(conversationId);
+    } else {
+      await conversation.save();
+    }
+  
+    return { message: 'User removed from conversation' };
+  }
+  
 }
