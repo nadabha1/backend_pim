@@ -42,6 +42,10 @@ export class Carnet extends Document {
 
   @Prop({ type: [Place], default: [] })
   places: Place[];
+  
+  @Prop({ default: 0 }) // Note globale par défaut de 0
+  globalAverageRating: number;
+
 }
 
 export const CarnetSchema = SchemaFactory.createForClass(Carnet);

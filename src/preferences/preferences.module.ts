@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PreferencesService } from './preferences.service';
 import { PreferencesController } from './preferences.controller';
@@ -7,13 +7,11 @@ import { UsersModule } from 'src/users/users.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Preference.name, schema: PreferenceSchema },
-      { name: Preference.name, schema: PreferenceSchema }
-    ]),
-    UsersModule
+    MongooseModule.forFeature([{ name: Preference.name, schema: PreferenceSchema }]),
+    forwardRef(() => UsersModule), // Wrap UsersModule with forwardRef
   ],
   controllers: [PreferencesController],
-  providers: [PreferencesService],
-  exports: [PreferencesService],  // si vous voulez exporter le service pour une utilisation dans d'autres modules
+  providers: [PreferencesService], // Ensure PreferencesService is provided
+  exports: [PreferencesService], // Export PreferencesService
 })
 export class PreferencesModule {}

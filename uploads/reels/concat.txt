@@ -1,0 +1,5 @@
+file '/Users/salma/Desktop/backend_pim/uploads/reels/59b7ebd2-5ec1-4eec-8f7b-5bae976333fc.jpg'
+duration 3
+file '/Users/salma/Desktop/backend_pim/uploads/reels/f7ac1eda-7538-44cc-987f-1411f19866a6.jpg'
+duration 3
+file '/Users/salma/Desktop/backend_pim/uploads/reels/f7ac1eda-7538-44cc-987f-1411f19866a6.jpg'

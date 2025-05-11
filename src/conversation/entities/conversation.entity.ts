@@ -11,8 +11,6 @@ export class Conversation extends Document {
 
   @Prop({ type: Types.ObjectId, ref: 'Message' })
   lastMessage: Types.ObjectId;
-  @Prop({ type: Date })
-  lastMessageDate: Date; // Store the date of the last message
 }
 
 // Génération automatique du schéma Mongoose

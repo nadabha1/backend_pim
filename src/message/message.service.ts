@@ -4,36 +4,26 @@ import { UpdateMessageDto } from './dto/update-message.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Message } from './entities/message.entity';
 import { Model } from 'mongoose';
-import { Conversation } from 'src/conversation/entities/conversation.entity';
 
 @Injectable()
 export class MessageService {
   constructor(@InjectModel(Message.name) private messageModel: Model<Message>,
-  @InjectModel(Conversation.name) private conversationModel: Model<Conversation>
 ) {}
 
-async createMessage(conversationId: string, senderId: string, content: string) {
-  const message = new this.messageModel({
-    conversation: conversationId,
-    sender: senderId,
-    content: content,
-  });
+  async createMessage(conversationId: string, senderId: string, content: string,  eventId?: string, type?: string
+  ) {
+    const message = new this.messageModel({
+      conversation: conversationId,
+      sender: senderId,
+      content: content || '', // facultatif si seulement un event est partagé
+      event: eventId ?? null,
+      type: type ?? null,
+    
+    });
 
-  const savedMessage = await message.save();  // Save the message
 
-  // After saving, update the last message and last message date in the conversation
-  await this.conversationModel.updateOne(
-    { _id: conversationId },
-    {
-      $set: {
-        lastMessage: savedMessage._id,  // Set the last message ID
-        lastMessageDate: savedMessage.createdAt,  // Set the createdAt timestamp of the message
-      },
-    }
-  );
-
-  return savedMessage;  // Return the saved message
-}
+    return await message.save();
+  }
 
   async getMessages(conversationId: string) {
     return await this.messageModel
@@ -55,5 +45,27 @@ async createMessage(conversationId: string, senderId: string, content: string) {
   }
   async getMessagesForUser(userId: string) {
     return this.messageModel.find({ $or: [{ senderId: userId }, { receiverId: userId }] });
+  }
+
+  async createaudioMessage(
+    conversationId: string,
+    senderId: string,
+    content: string,
+    eventId?: string,
+    type?: string,
+  ) {
+    const message = new this.messageModel({
+      conversation: conversationId,
+      sender: senderId,
+      content: content || '',
+      event: eventId ?? null,
+      type: type ?? 'text', // 'audio', 'event', etc.
+    });
+  
+    return await message.save();
+  }
+
+  async deleteMessagesByUser(userId: string): Promise<void> {
+    await this.messageModel.deleteMany({ sender: userId }).exec();
   }
 }

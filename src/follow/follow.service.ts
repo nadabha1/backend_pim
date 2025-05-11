@@ -30,7 +30,7 @@ export class FollowService {
             senderId: followerId,
             recipientId: followingId.toString(),
             type: NotificationType.FOLLOW,
-            content: 'Vous avez un nouveau follower!',
+            content: 'Guess what? You’ve got a new follower!',
             data: { followerId: followerId.toString() },
           });
     return { message: 'Follow successful' };
@@ -81,5 +81,11 @@ export class FollowService {
     };
   }
 
+  async deleteFollowRelationsByUser(userId: string): Promise<void> {
+    // Supprimer les relations où l'utilisateur est un follower
+    await this.followModel.deleteMany({ follower: userId }).exec();
 
+    // Supprimer les relations où l'utilisateur est un following
+    await this.followModel.deleteMany({ following: userId }).exec();
+  }
 }

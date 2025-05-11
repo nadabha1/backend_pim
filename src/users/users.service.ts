@@ -9,7 +9,18 @@ import { CarnetService } from 'src/carnet/carnet.service';
 import { PreferencesModule } from 'src/preferences/preferences.module';
 import { Types } from 'mongoose';
 import { PreferencesService } from 'src/preferences/preferences.service';
-import { UpdateLocationDto } from './dto/update-location.dto';
+import { console } from 'inspector';
+import { EventService } from 'src/event/event.service'; // ✅ Import EventService
+import { ChatService } from 'src/chat/chat.service'; // ✅ Import ChatService
+import { ConversationService } from 'src/conversation/conversation.service'; // ✅ Import ConversationService
+import { FollowService } from 'src/follow/follow.service'; // ✅ Import FollowService
+import { FreeTimeService } from 'src/free-times/free-times.service'; // ✅ Import FreeTimeService
+import { MessageService } from 'src/message/message.service'; // ✅ Import MessageService
+import { NotificationService } from 'src/notification/notification.service'; // ✅ Import NotificationService
+import { ReelService } from 'src/reel/reel.service'; // ✅ Import ReelService
+import { ReviewService } from 'src/review/review.service'; // ✅ Import ReviewService
+import { TripService } from 'src/trip/trip.service'; // ✅ Import TripService
+import { UserEventService } from 'src/user-event/user-event.service'; // ✅ Import UserEventService
 
 @Injectable()
 export class UsersService {
@@ -18,8 +29,18 @@ export class UsersService {
     @InjectModel(Preference.name) private preferenceModel: Model<Preference>,
     private readonly mailerService: MailerService,
     private readonly carnetService: CarnetService, 
-    private readonly preferenceService: PreferencesService,  // Adjust path as needed
-
+    private readonly preferenceService: PreferencesService,
+    private readonly eventService: EventService, 
+    private readonly chatService: ChatService, // ✅ Inject ChatService
+    private readonly conversationService: ConversationService, // ✅ Inject ConversationService
+    private readonly followService: FollowService, // ✅ Inject FollowService
+    private readonly freeTimeService: FreeTimeService, // ✅ Inject FreeTimeService
+    private readonly messageService: MessageService, // ✅ Inject MessageService
+    private readonly notificationService: NotificationService, // ✅ Inject NotificationService
+    private readonly reelService: ReelService, // ✅ Inject ReelService
+    private readonly reviewService: ReviewService, // ✅ Inject ReviewService
+    private readonly tripService: TripService, // ✅ Inject TripService
+    private readonly userEventService: UserEventService, // ✅ Inject UserEventService
   ) {}
 
   /**
@@ -52,30 +73,23 @@ export class UsersService {
         throw new InternalServerErrorException(`Error creating user: ${error.message}`);
     }
 }
+async validateOtp(email: string, otp: string): Promise<boolean> {
+  const user = await this.userModel.findOne({ email });
+
+  if (!user) return false;
+
+  // Check if the OTP matches
+  if (user.resetPasswordOtp !== otp) return false;
+
+  // Optional: Check expiration (if you store otpExpiration)
+  if (user.resetPasswordOtpExpires && user.resetPasswordOtpExpires < new Date()) return false;
+
+  return true;
+}
 async findAllExceptCreator(creatorId: string) {
   return await this.userModel.find({ _id: { $ne: creatorId } });
 }
 
-async addCoins(userId: string, coinsToAdd: number): Promise<User> {
-  const user = await this.userModel.findById(userId);
-
-  if (!user) {
-    throw new NotFoundException('User not found');
-  }
-
-  // Calculate the new coin balance
-  const newCoinBalance = user.coins + coinsToAdd;
-
-  // If the new coin balance exceeds 500, set it to 500
-  if (newCoinBalance > 500) {
-    user.coins = 500;
-  } else {
-    user.coins = newCoinBalance;
-  }
-
-  await user.save();
-  return user;
-}
 async sendVerificationEmail(email: string, userId: string): Promise<void> {
   console.log(`🟢 Preparing to send email to: ${email}, User ID: ${userId}`);
 
@@ -84,7 +98,7 @@ async sendVerificationEmail(email: string, userId: string): Promise<void> {
       throw new Error("userId is undefined in sendVerificationEmail");
   }
 
-  const verificationLink = `http://10.0.2.2:3000/auth/confirm/${userId}`;
+  const verificationLink = `http://localhost:3000/auth/confirm/${userId}`;
   console.log(`🟢 Generated Verification Link: ${verificationLink}`);
 
   try {
@@ -181,6 +195,16 @@ async sendVerificationEmail(email: string, userId: string): Promise<void> {
   /**
    * ✅ Update user details
    */
+  async updateAvailability(userId: string, availability: any[]) {
+    return this.userModel.findByIdAndUpdate(userId, {
+      availability: availability,
+    });
+  }
+  // Exemple de méthode fictive : renvoyer tous les users avec leurs créneaux de disponibilité
+async findAllWithAvailability(): Promise<User[]> {
+  return this.userModel.find({ disponibilites: { $exists: true } }).exec();
+}
+
   async update(id: string, updateData: Partial<User>): Promise<User> {
     return this.userModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
   }
@@ -206,7 +230,53 @@ async sendVerificationEmail(email: string, userId: string): Promise<void> {
    * ✅ Delete user and preferences
    */
   async delete(id: string): Promise<User> {
-    await this.preferenceModel.findOneAndDelete({ user: id }).exec();
+    const user = await this.userModel.findById(id);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Supprimer le carnet associé si l'utilisateur en possède un
+    if (user.carnetId) {
+      await this.carnetService.deleteCarnet(user.carnetId, id);
+    }
+
+    // Supprimer les événements créés par l'utilisateur
+    await this.eventService.deleteEventsByUser(id);
+
+    // Supprimer les chats associés à l'utilisateur
+    await this.chatService.deleteChatsByUser(id);
+
+    // Supprimer les conversations associées à l'utilisateur
+    await this.conversationService.deleteConversationsByUser(id);
+
+    // Supprimer les relations de suivi (followers et following)
+    await this.followService.deleteFollowRelationsByUser(id);
+
+    // Supprimer les plages horaires associées à l'utilisateur
+    await this.freeTimeService.deleteFreeTimesByUser(id);
+
+    // Supprimer les messages envoyés par l'utilisateur
+    await this.messageService.deleteMessagesByUser(id);
+
+    // Supprimer les notifications associées à l'utilisateur
+    await this.notificationService.deleteNotificationsByUser(id);
+
+    // Supprimer les préférences associées à l'utilisateur
+    await this.preferenceService.deletePreferencesByUser(id);
+
+    // Supprimer les reels associés à l'utilisateur
+    await this.reelService.deleteReelsByUser(id);
+
+    // Supprimer les reviews associées à l'utilisateur
+    await this.reviewService.deleteReviewsByUser(id);
+
+    // Supprimer les trips associés à l'utilisateur
+    await this.tripService.deleteTripsByUser(id);
+
+    // ✅ Supprimer les UserEvents associés à l'utilisateur
+    await this.userEventService.deleteUserEventsByUser(id);
+
+    // Supprimer l'utilisateur
     return this.userModel.findByIdAndDelete(id).exec();
   }
 
@@ -214,7 +284,8 @@ async sendVerificationEmail(email: string, userId: string): Promise<void> {
    * ✅ Forgot Password (OTP)
    */
   async forgotPassword(email: string): Promise<string> {
-    const user = await this.userModel.findOne({ email });
+    console.log('Received email for password reset:', email);
+    const user = await this.userModel.findOne({ email :email });
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -297,17 +368,6 @@ async sendVerificationEmail(email: string, userId: string): Promise<void> {
     };
   }
 
-  async getCoinsByUserId(userId: string): Promise<number> {
-    const user = await this.userModel.findById(userId).exec();
-    
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    return user.coins;
-  }
-
-
 async getUnlockedPlaces(userId: string): Promise<string[]> {
   const user = await this.userModel.findById(userId);
   
@@ -371,81 +431,6 @@ async removePlaceFromFavorites(userId: string, placeId: string): Promise<User> {
 
   return user;
 }
-async updateLocation(
-  userId: string,
-  dto: UpdateLocationDto,
-): Promise<User> {
-  const updateData: Partial<User> = {
-    coordinates: { lat: dto.lat, lng: dto.lng },
-    ...(dto.address && { location: dto.address }),
-    ...(dto.heading && { 
-      orientation: { 
-        heading: dto.heading, 
-        lastUpdated: new Date() 
-      } 
-    }),
-  };
-
-  // Push to history (limit to last 10 entries for performance)
-  const mongoUpdate: Record<string, any> = {
-    $set: updateData,
-    $push: {
-      locationHistory: {
-        $each: [{ lat: dto.lat, lng: dto.lng, timestamp: new Date() }],
-        $slice: -10, // Keep only the last 10 entries
-      },
-    },
-  };
-
-  return this.userModel.findByIdAndUpdate(
-    userId,
-    updateData,
-    { new: true },
-  );
-}
-
-// Get nearby users (for social AR features)
-async getNearbyUsers(
-  userId: string,
-  radiusKm: number = 1,
-): Promise<User[]> {
-  const user = await this.userModel.findById(userId);
-  if (!user?.coordinates?.lat) return [];
-
-  const earthRadiusKm = 6371;
-  const radiusRad = radiusKm / earthRadiusKm;
-
-  return this.userModel.find({
-    _id: { $ne: userId }, // Exclude self
-    'coordinates.lat': { $exists: true },
-    $expr: {
-      $lt: [
-        {
-          $acos: {
-            $add: [
-              { $multiply: [
-                { $sin: { $degreesToRadians: "$coordinates.lat" } },
-                { $sin: { $degreesToRadians: user.coordinates.lat } }
-              ] },
-              { $multiply: [
-                { $cos: { $degreesToRadians: "$coordinates.lat" } },
-                { $cos: { $degreesToRadians: user.coordinates.lat } },
-                { $cos: { 
-                  $subtract: [
-                    { $degreesToRadians: "$coordinates.lng" },
-                    { $degreesToRadians: user.coordinates.lng },
-                  ]
-                }}
-              ]}
-            ]
-          }
-        },
-        radiusRad
-      ]
-    }
-  });
-}
-
 
 
 }

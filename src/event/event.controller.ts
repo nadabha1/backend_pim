@@ -1,6 +1,8 @@
 import { Controller, Post, Get, Body, Param, Query, Patch, Delete, BadRequestException } from '@nestjs/common';
 import { EventService } from './event.service';
-import { EventType } from './entities/event.entity';
+import { EventType, Event as CustomEventEntity } from './entities/event.entity';
+import { ParseObjectIdPipe } from 'src/parse-object-id.pipe';
+import { Types } from 'mongoose';
 
 @Controller('events')
 export class EventController {
@@ -15,36 +17,34 @@ async isUserJoined(
   return { joined: isJoined };
 }
 
-@Post()
-async create(
-  @Body() body: {
-    creatorId: string;
+  @Post()
+  async create(
+    @Body() body: {
+      creatorId: string;
     title: string;
     description: string;
-    date: string;
+    startDate: string; // Date ISO string avec heure
+    endDate: string;   // Date ISO string avec heure
     location: string;
     joinPrice?: number;
     type: EventType;
-  },
-) {
-  try {
+    imagePath?: string; 
+
+    }
+  ) {
     const event = await this.eventService.createEvent(
       body.creatorId,
-      body.title,
-      body.description,
-      new Date(body.date),
-      body.location,
-      body.joinPrice,
-      body.type, // Include event type
+    body.title,
+    body.description,
+    new Date(body.startDate).toISOString(),
+    new Date(body.endDate).toISOString(),
+    body.location,
+    body.joinPrice,
+    body.type,
+     body.imagePath
     );
     return event;
-  } catch (error) {
-    if (error instanceof BadRequestException) {
-      throw error; // Forward the BadRequestException (daily limit reached)
-    }
-    throw new Error('Error creating event: ' + error.message);
   }
-}
   @Get(':id')
 async findOne(@Param('id') id: string) {
   if (id === 'all') {
@@ -64,7 +64,7 @@ async findOne(@Param('id') id: string) {
   async getAllEvents() {
     const events = await this.eventService.findAllEvents();
     console.log("📢 Events fetched from API:", events);  // ➡️ LOG pour vérifier
-    return events;
+    return events as CustomEventEntity[];
   }
 
   @Post(':id/join')
@@ -72,10 +72,9 @@ async findOne(@Param('id') id: string) {
     return await this.eventService.joinEvent(id, body.userId);
   }
   @Get('user/:userId')
-  async getUserEvents(@Param('userId') userId: string) {
+  async getByUser(@Param('userId') userId: string) {
     return this.eventService.getEventsByUser(userId);
   }
-
 
   // Add the update route
   @Patch(':id')
@@ -92,6 +91,34 @@ async findOne(@Param('id') id: string) {
   @Get('specific/:userId')
 async findSpecificEvents(@Param('userId') userId: string) {
   return await this.eventService.findSpecificEvents(userId);
+}
+@Get('suggest/:userId')
+async suggestForUser(@Param('userId') userId: string) {
+  return this.eventService.findEventsDuringUserFreeTime(userId);
+}
+// event.controller.ts
+@Get('during-free-time/:userId')
+async getEventsDuringUserFreeTime(@Param('userId') userId: string) {
+  return this.eventService.findEventsDuringUserFreeTime(userId);
+}
+
+/*@Get('non-conflicting/:userId')
+async getNonConflictingEvents(@Param('userId', ParseObjectIdPipe) userId: Types.ObjectId): Promise<CustomEventEntity[]> {
+  try {
+    const events = await this.eventService.findNonConflictingEvents(userId);
+    return events;
+  } catch (error) {
+    throw new Error(`Error fetching non-conflicting events: ${error.message}`);
+  }
+}*/
+@Get('non-conflicting/:userId')
+async getNonConflictingEvents(@Param('userId') userId: string) {
+  return this.eventService.findNonConflictingEvents(new Types.ObjectId(userId));
+}
+
+@Get('created-by/:userId')
+async getCreatedByUser(@Param('userId') userId: string) {
+  return await this.eventService.getEventsCreatedByUser(userId);
 }
 
 }

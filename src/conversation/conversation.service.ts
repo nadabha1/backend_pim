@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import mongoose, { Model, Types } from 'mongoose';
 import { Conversation } from './entities/conversation.entity';
 import { NotificationService } from 'src/notification/notification.service';
 import { NotificationGateway } from 'src/notification/socket.gateway';
@@ -29,22 +29,23 @@ async getUserConversationsname(userId: string) {
 }
 async getUserConversations(userId: string) {
   const conversations = await this.conversationModel
-    .find({ participants: userId })
+    .find({ participants: { $in: [userId] } }) // Recherche les conversations où userId est un participant
     .populate({
-      path: 'participants',
+      path: 'participants', 
       model: 'User',
-      select: 'name',
+      select: 'name ' // Sélectionne les informations nécessaires pour les participants
     })
     .populate({
       path: 'lastMessage',
-      select: 'content createdAt', // Populate last message content and date
+      select: 'content createdAt'
     })
     .exec();
 
-  console.log("Conversations found:", JSON.stringify(conversations, null, 2));
+  console.log("Conversations trouvées:", JSON.stringify(conversations, null, 2)); // Log pour debug
   return conversations;
 }
 
+  
   async createConversation(participants: string[]) {
     const conversation = await this.conversationModel.create({ participants });
     return conversation;
@@ -88,14 +89,13 @@ async getUserConversations(userId: string) {
         senderId: userId,
         recipientId: otherUserId,
         type: NotificationType.MESSAGE,
-        content: `Vous avez une nouvelle conversation avec ${sender.name}.`, // 🟢 Utiliser le nom ici
+        content: `Say hi! You have a new conversation with ${sender.name}.`, // 🟢 Utiliser le nom ici
         data: { conversationId: conversation._id.toString() } // 🟢 Inclure l’ID de la conversation
       });
     }
   
     return conversation;
   }
-  
   async createConversation2(userId: string, otherUserId: string) {
     const existingConversation = await this.conversationModel.findOne({
       participants: { $all: [userId, otherUserId] }
@@ -114,12 +114,24 @@ async getUserConversations(userId: string) {
       senderId: userId,
       recipientId: otherUserId,
       type: NotificationType.MESSAGE,
-      content: `Vous avez une nouvelle conversation avec ${userId}.`,
+      content: `Say hi! You have a new conversation with ${userId}.`,
     });
     
       
     return conversation;
   }
   
+
+  async createConversationGroupnotevent(data: { participants: string[]; title: string }) {
+    const conversation = new this.conversationModel({
+      participants: data.participants, // Utiliser directement les strings pour les participants
+      title: data.title,
+    });
   
+    return await conversation.save();
+  }
+
+  async deleteConversationsByUser(userId: string): Promise<void> {
+    await this.conversationModel.deleteMany({ participants: userId }).exec();
+  }
 }

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Types } from 'mongoose';
@@ -8,126 +8,117 @@ import { ConversationService } from 'src/conversation/conversation.service';
 import { NotificationGateway } from 'src/notification/socket.gateway';
 import { NotificationType } from 'src/notification/entities/notification.entity';
 import { UsersService } from 'src/users/users.service';
-import { Preference,PreferenceDocument } from 'src/preferences/entities/preference.entity';
- // Adjust path as needed
+import { Preference, PreferenceDocument } from 'src/preferences/entities/preference.entity';
+import { FreeTimeService } from 'src/free-times/free-times.service';
 
 @Injectable()
 export class EventService {
   constructor(
     @InjectModel(Event.name) private eventModel: Model<EventDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
-    private readonly userService: UsersService,  // 🟢 Injecter UserService
-    private conversationService: ConversationService, // Adjust path as needed
-    private readonly socketGateway: NotificationGateway, // ✅ Injection du WebSocket Gateway
-    
+    @Inject(forwardRef(() => UsersService)) private readonly usersService: UsersService, // ✅ Use only this instance
+    private conversationService: ConversationService,
+    private readonly socketGateway: NotificationGateway,
+    private readonly freeTimeService: FreeTimeService,
     @InjectModel(Preference.name) private preferenceModel: Model<PreferenceDocument>,
-
   ) {}
-
-  async hasUserReachedLimit(creatorId: string): Promise<boolean> {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0); // Start of today
-
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999); // End of today
-
-    const eventCount = await this.eventModel.countDocuments({
-      creatorId: new Types.ObjectId(creatorId),
-      createdAt: { $gte: todayStart, $lte: todayEnd }, // Filter events created today
-    });
-
-    return eventCount >= 5; // If the user has created 5 or more events today, return true
-  }
-
+  
   async createEvent(
     creatorId: string,
     title: string,
     description: string,
-    date: Date,
+    startDate: string,
+    endDate: string,
     location: string,
     joinPrice: number = 5,
     type: EventType,
+    imagePath?: string 
   ) {
-    // Check if the user has already created 5 events today
-    const hasReachedLimit = await this.hasUserReachedLimit(creatorId);
-    if (hasReachedLimit) {
-      throw new BadRequestException('You have reached the daily event creation limit.');
-    }
-
     const creatorObjectId = Types.ObjectId.createFromHexString(creatorId);
+
     const conversation = await this.conversationService.createConversationGroup({
       participants: creatorId,
-      title: title, // Use the event title as the group name
+      title: title, // Utiliser le titre de l'événement comme nom du groupe
     });
 
-    // Create the event
+    // Create the event with creator as a participant
     const event = new this.eventModel({
       creatorId: creatorObjectId,
       title,
       description,
-      date,
+      startDate: new Date(startDate), // Parse ISO string to Date
+      endDate: new Date(endDate),     // Parse ISO string to Date
       location,
       participants: [creatorObjectId],
       joinPrice,
-      conversationId: conversation._id, // Link conversation ID
-      type, // Event type
+      conversationId: conversation._id,
+      type,
+      imagePath,
     });
 
     const savedEvent = await event.save();
 
-    // Reward the creator with 10 coins
+    // Reward creator with 10 coins
     const user = await this.userModel.findById(creatorObjectId);
     if (user) {
-      user.coins = (user.coins || 0) + 10;
+      user.coins = (user.coins || 0) + 5;
       await user.save();
     } else {
       throw new Error('Creator not found');
     }
-
-    // Send notifications
     this.socketGateway.sendNotification({
       senderId: creatorId,
       recipientId: creatorId,
       type: NotificationType.NEW_Event,
-      content: `Your event "${title}" has been successfully created.`,
+      content: `Great! Your event "${title}" has been created!`,
       data: { eventId: savedEvent._id.toString() },
     });
 
-    const allUsersExceptCreator = await this.userService.findAllExceptCreator(creatorId);
+    const allUsersExceptCreator = await this.usersService.findAllExceptCreator(creatorId);
 
-    // Send notification to all other users
+    // 🟢 Envoyer `NEW_EVENT_All` à tous les autres utilisateurs
     for (const user of allUsersExceptCreator) {
       this.socketGateway.sendNotification({
         senderId: creatorId,
         recipientId: user._id.toString(),
         type: NotificationType.NEW_EVENT_All,
-        content: `A new event "${title}" has been created. Check it out!`,
+        content: `Don't miss it! The new event "${title}" is here!`,
         data: { eventId: savedEvent._id.toString() },
       });
     }
 
     return savedEvent;
   }
+
+  // Trouve les événements entre deux dates
+  async findEventsBetween(start: Date, end: Date): Promise<Event[]> {
+    return this.eventModel.find({
+      startDate: { $gte: start },
+      endDate: { $lte: end }
+    }).exec();
+  }
+
   async findOne(id: string) {
     const events = await this.eventModel.findById(id)
-    .populate({
-      path: 'participants', 
-      model:'User',
-      select: '_id name' // Ajoute avatarUrl pour éviter le crash
-    })    .exec();
-    
+      .populate({
+        path: 'participants', 
+        model: 'User',
+        select: '_id name' // Ajoute avatarUrl pour éviter le crash
+      })
+      .exec();
+    return events;
   }
-// event.service.ts
 
-async isUserJoined(eventId: string, userId: string): Promise<boolean> {
-  const event = await this.eventModel.findById(eventId);
-  if (!event) throw new Error('Event not found');
+  async isUserJoined(eventId: string, userId: string): Promise<boolean> {
+    const event = await this.eventModel.findById(eventId);
+    if (!event) throw new Error('Event not found');
 
-  // ✅ Convertir userId en ObjectId avant de vérifier
-  const userObjectId = new Types.ObjectId(userId);
-  
-  return event.participants.includes(userObjectId);
-}
+    // ✅ Convertir userId en ObjectId avant de vérifier
+    const userObjectId = new Types.ObjectId(userId);
+    
+    return event.participants.includes(userObjectId);
+  }
+
   async findAll(userId: string) {
     return await this.eventModel
       .find({
@@ -140,26 +131,23 @@ async isUserJoined(eventId: string, userId: string): Promise<boolean> {
       .exec();
   }
 
- // event.service.ts
- async findAllEvents() {
-  const events = await this.eventModel
-    .find()
-    .populate({
-      path: 'participants', 
-      model:'User',
+  async findAllEvents() {
+    const events = await this.eventModel
+      .find()
+      .populate({
+        path: 'participants', 
+        model: 'User',
+        select: '_id name' // Ajoute avatarUrl pour éviter le crash
+      });
+    const result = events.map(event => ({
+      ...event.toObject(), // 👈 Convertit à un objet simple
+      participantNames: event.participants.map(
+        (p: any) => p.name // 👉 On peut accéder à p.name car c’est un objet mongoose
+      ),
+    }));
 
-      select: '_id name' // Ajoute avatarUrl pour éviter le crash
-    })
-  const result = events.map(event => ({
-    ...event.toObject(), // 👈 Convertit à un objet simple
-    participantNames: event.participants.map(
-      (p: any) => p.name // 👉 On peut accéder à p.name car c’est un objet mongoose
-    ),
-  }));
-
-  return result;
-}
-
+    return result;
+  }
 
   async joinEvent(eventId: string, userId: string) {
     const eventObjectId = Types.ObjectId.createFromHexString(eventId);
@@ -168,33 +156,34 @@ async isUserJoined(eventId: string, userId: string): Promise<boolean> {
     if (!event) throw new Error('Event not found');
 
     if (!event.participants.includes(userObjectId)) {
-        const user = await this.userModel.findById(userObjectId);
-        if (!user || user.coins < event.joinPrice) {
-            throw new Error('Insufficient coins');
-        }
-        event.participants.push(userObjectId);
-        user.coins -= event.joinPrice;
-        await event.save();
-        await user.save();
+      const user = await this.userModel.findById(userObjectId);
+      if (!user || user.coins < event.joinPrice) {
+        throw new HttpException('Insufficient coins', HttpStatus.BAD_REQUEST); // ou 402
+      }
+      event.participants.push(userObjectId);
+      user.coins -= event.joinPrice;
+      await event.save();
+      await user.save();
     }
 
     // ✅ Récupération correcte de la conversation
     const conversation = await this.conversationService.findConversationByTitle(event.title);
     if (conversation) {
-        // ✅ Correction du type avec "as string"
-        await this.conversationService.addUserToConversation(conversation._id.toString(), userId);
+      // ✅ Correction du type avec "as string"
+      await this.conversationService.addUserToConversation(conversation._id.toString(), userId);
     } else {
-        console.log(`❌ Conversation not found for event: ${event.title}`);
+      console.log(`❌ Conversation not found for event: ${event.title}`);
     }
 
     return event;
-}
-
-
-  async getEventsByUser(userId: string) {
-    return this.eventModel.find({ where: { creatorId: userId } });
   }
-  async updateEvent(eventId: string, updateData: { title?: string; description?: string; date?: string; location?: string; joinPrice?: number }) {
+
+  async getEventsByUser(userId: string): Promise<Event[]> {
+    return this.eventModel.find({ creatorId: new Types.ObjectId(userId) }).exec();
+  }
+
+  async updateEvent(eventId: string, updateData: { title?: string; description?: string; startDate?: string;
+    endDate?: string; location?: string; joinPrice?: number }) {
     const eventObjectId = Types.ObjectId.createFromHexString(eventId);
     const event = await this.eventModel.findById(eventObjectId);
     
@@ -203,13 +192,15 @@ async isUserJoined(eventId: string, userId: string): Promise<boolean> {
     // Update fields that are provided
     if (updateData.title) event.title = updateData.title;
     if (updateData.description) event.description = updateData.description;
-    if (updateData.date) event.date = new Date(updateData.date);
+    if (updateData.startDate) event.startDate = new Date(updateData.startDate);
+    if (updateData.endDate) event.endDate = new Date(updateData.endDate);
     if (updateData.location) event.location = updateData.location;
     if (updateData.joinPrice !== undefined) event.joinPrice = updateData.joinPrice;
 
     await event.save();
     return event;
   }
+
   async deleteEvent(eventId: string) {
     const eventObjectId = Types.ObjectId.createFromHexString(eventId);
     const event = await this.eventModel.findById(eventObjectId);
@@ -232,16 +223,13 @@ async isUserJoined(eventId: string, userId: string): Promise<boolean> {
   }
   
   async findSpecificEvents(userId: string): Promise<Event[]> {
-
     // Fetch the user's preferences
     console.log("Searching for preferences with userId:", userId);
 
     const userPreferences = await this.preferenceModel.findOne({ user: userId });
 
-    
     console.log("Fetched user preferences:", userPreferences);
     
-  
     if (!userPreferences) {
       throw new Error('User preferences not found');
     }
@@ -255,23 +243,80 @@ async isUserJoined(eventId: string, userId: string): Promise<boolean> {
     }
   
     // Find events where the type matches one of the preferred event types
-    const event= await this.eventModel
+    const event = await this.eventModel
       .find({ type: { $in: preferredEventTypes } })
       .populate({
         path: 'participants', 
-        model:'User',
-  
+        model: 'User',
         select: '_id name' // Ajoute avatarUrl pour éviter le crash
       }).exec();
-      const result = event.map(event => ({
-        ...event.toObject(), // 👈 Convertit à un objet simple
-        participantNames: event.participants.map(
-          (p: any) => p.name // 👉 On peut accéder à p.name car c’est un objet mongoose
-        ),
-      }));
+    const result = event.map(event => ({
+      ...event.toObject(), // 👈 Convertit à un objet simple
+      participantNames: event.participants.map(
+        (p: any) => p.name // 👉 On peut accéder à p.name car c’est un objet mongoose
+      ),
+    }));
     
-      return result;
+    return result;
   }
+
+  async findEventsDuringUserFreeTime(userId: string): Promise<Event[]> {
+    const freeTimes = await this.freeTimeService.getFreeTimeByUser(userId);
+    if (!freeTimes || freeTimes.length === 0) return [];
   
+    // Construct query to find events during the free slots
+    const orConditions = freeTimes.map(({ start, end }) => ({
+      $or: [
+        { startDate: { $gte: new Date(start) } },  // Event starts after or at the free time start
+        { endDate: { $lte: new Date(end) } },      // Event ends before or at the free time end
+      ]
+    }));
   
+    return this.eventModel.find({ $or: orConditions }).exec();
+  }
+
+  async findNonConflictingEvents(userId: Types.ObjectId): Promise<Event[]> {
+    const userEvents = await this.eventModel.find({
+      $or: [{ creatorId: userId }, { participants: userId }],
+    });
+
+    console.log(`📌 Events for user ${userId}:`, userEvents);
+
+    const conflictingEventIds = userEvents.map(event => event._id);
+
+    const nonConflictingEvents = await this.eventModel.find({
+      $or: [
+        { _id: { $nin: conflictingEventIds } }, // Events not in conflict
+        { participants: userId }, // Include events the user has already joined
+        { startDate: { $gte: new Date() } },
+        { endDate: { $gte: new Date() } },
+      ],
+    });
+
+    console.log(`✅ Non-conflicting events found:`, nonConflictingEvents);
+
+    return nonConflictingEvents;
+  }
+
+  async deleteEventsByUser(userId: string): Promise<void> {
+    const events = await this.eventModel.find({ creatorId: userId });
+    
+    for (const event of events) {
+      // Rembourser les participants (optionnel)
+      for (const participantId of event.participants) {
+        const user = await this.userModel.findById(participantId);
+        if (user) {
+          user.coins += event.joinPrice; // Remboursement du prix d'entrée
+          await user.save();
+        }
+      }
+
+      // Supprimer l'événement
+      await this.eventModel.findByIdAndDelete(event._id);
+    }
+  }
+
+  async getEventsCreatedByUser(userId: string): Promise<Event[]> {
+    return this.eventModel.find({ creatorId: new Types.ObjectId(userId) }).exec();
+  }
 }

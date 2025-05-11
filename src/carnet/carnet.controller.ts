@@ -145,5 +145,11 @@ async deletePlace(
  async getPlacesByCategories(@Query('categories') categories: string[]): Promise<Place[]> {
    return this.carnetService.getPlacesByCategories(categories);
  }
+ @Get('total-rating/:userId')
+async getTotalRating(@Param('userId') userId: string) {
+  const rating = await this.carnetService.getTotalRatingForTraveler(userId);
+  return { averageRating: rating };
+}
+
 
 }

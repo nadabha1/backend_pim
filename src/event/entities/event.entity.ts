@@ -26,8 +26,11 @@ export class Event {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   creatorId: Types.ObjectId;
 
-  @Prop({ required: true })
-  date: Date;
+  @Prop({ required: true }) // 🔄 Était `date`
+  startDate: Date;
+
+  @Prop({ required: true }) // 🆕 Ajouté
+  endDate: Date;
 
   @Prop({ required: true })
   location: string;
@@ -44,6 +47,9 @@ export class Event {
   // ✅ Add the event type enum
   @Prop({ required: true, enum: EventType, default: EventType.OTHER })
   type: EventType;
+  @Prop({ required: false })
+  imagePath: string;
+
 }
 
 export const EventSchema = SchemaFactory.createForClass(Event);

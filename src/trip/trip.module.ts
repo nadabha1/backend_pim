@@ -20,6 +20,6 @@ import { NotificationService } from 'src/notification/notification.service';
   ],
   controllers: [TripController],
   providers: [TripService , TripReminderService , NotificationService],
-  exports: [MongooseModule] 
+  exports: [TripService] // ✅ Export TripService for use in other modules
 })
 export class TripModule {}

@@ -1,15 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import axios from 'axios';
+import * as fs from 'fs';
+import * as path from 'path';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, Document } from 'mongoose';
 import { User, UserDocument } from 'src/users/entities/user.entity';
 import { Carnet, CarnetDocument } from 'src/carnet/entities/carnet.entity';
 import { ConfigService } from '@nestjs/config';
+import * as FormData from 'form-data';
 
 type PlaceDocument = Carnet['places'][0] & Document;  // ➤ Type pour reconnaître `_id`
 
 @Injectable()
 export class AIService {
+
   private apiKey: string;
 
   constructor(
@@ -18,8 +22,7 @@ export class AIService {
     @InjectModel('Preference') private preferenceModel: Model<any>,
     private configService: ConfigService
   ) {
-    this.apiKey = "sk-Xh3kl2eRQ4IiRKVFNpZWm3OyX4mmvxARpupdoErE0Xfklfwb";
-    if (!this.apiKey) {
+    this.apiKey = "sk-Xh3kl2eRQ4IiRKVFNpZWm3OyX4mmvxARpupdoErE0Xfklfwb";    if (!this.apiKey) {
       throw new Error('La clé API ChatAnywhere est manquante !');
     }
   }
@@ -311,7 +314,134 @@ export class AIService {
         lockedPlaces
       };
     }
+
+    async generateImage(prompt: string): Promise<string> {
+      try {
+        const response = await axios.post(
+'https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5',
+          { inputs: prompt },
+          {
+            headers: {
+              Authorization: `Bearer `, // ton vrai token ici
+              Accept: 'application/json',
+            },
+            responseType: 'arraybuffer', // pour récupérer l'image brute
+          }
+        );
     
+        const imageBuffer = Buffer.from(response.data, 'binary');
+        return imageBuffer.toString('base64');
+      } catch (error) {
+        const errorMsg = error.response?.data
+          ? Buffer.from(error.response.data).toString('utf-8')
+          : error.message;
     
+        console.error('❌ Erreur HuggingFace:', errorMsg);
+        throw new Error('Erreur lors de la génération de l’image');
+      }
+    }
     
+    /*async generateImage2(prompt: string): Promise<string> {
+      const response = await axios.post(
+        'https://router.huggingface.co/fal-ai/fal-ai/hidream-i1-full',
+        { inputs: prompt },
+        {
+          headers: {
+            Authorization: 'Bearer ', // Remplacez par votre token Hugging Face
+            Accept: 'application/json',
+          },
+          responseType: 'arraybuffer', // pour récupérer l'image brute
+        }
+      );
+    
+      const imageBuffer = Buffer.from(response.data, 'binary');
+      return imageBuffer.toString('base64'); // à envoyer à Flutter
+    }*/
+    
+    /*async generateImageWithHuggingFace(prompt: string): Promise<string> {
+      const payload = {
+        sync_mode: true,
+        prompt: `"${prompt}"`,
+      };
+    
+      try {
+        const response = await fetch(this.HF_API_URL, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${this.HF_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+    
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new HttpException(`Erreur API Hugging Face: ${errorText}`, response.status);
+        }
+    
+        const imageBlob = await response.blob();
+        const arrayBuffer = await imageBlob.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+    
+        return buffer.toString('base64'); // 👈 Retourne base64 directement
+
+      } catch (error) {
+        console.error('Erreur lors de la génération de l’image :', error);
+        throw new HttpException(
+          'Erreur lors de la génération de l’image',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+    }*/
+      async generateImageWithFlux(
+        eventTitle: string,
+        startDate: string,
+        endDate: string,
+        location: string,
+        description: string, // ajout de la description ici
+      ): Promise<string> {
+        const formData = new URLSearchParams();
+      
+        // Création du prompt avec tous les éléments pertinents
+        const prompt = `Créer une affiche verticale pour un événement intitulé "${eventTitle}".
+                        Description : ${description}
+                        L'événement aura lieu à ${location}, du ${startDate} au ${endDate}.
+                        Style : ambiance festive, couleurs vives, design graphique moderne et attrayant.`;
+      
+        formData.append('prompt', prompt);
+        formData.append('width', '1024');
+        formData.append('height', '1024');
+        formData.append('seed', '918440');
+        formData.append('model', 'flux');
+      
+        try {
+          const response = await fetch(
+            'https://ai-text-to-image-generator-flux-free-api.p.rapidapi.com/aaaaaaaaaaaaaaaaaiimagegenerator/fluximagegenerate/generateimage.php',
+            {
+              method: 'POST',
+              headers: {
+                'content-type': 'application/x-www-form-urlencoded',
+                'x-rapidapi-host': 'ai-text-to-image-generator-flux-free-api.p.rapidapi.com',
+                'x-rapidapi-key': '1aa6ea7e49msh4fda089ceb05a17p17021fjsnfc6be34f086f',
+              },
+              body: formData.toString(),
+            },
+          );
+      
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new HttpException(`Erreur API Flux: ${errorText}`, response.status);
+          }
+      
+          const arrayBuffer = await response.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+      
+          return buffer.toString('base64');
+        } catch (error) {
+          console.error('Erreur avec l’API Flux:', error);
+          throw new HttpException('Erreur lors de la génération de l’image', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+      }
+      
+      
 }

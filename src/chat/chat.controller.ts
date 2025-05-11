@@ -2,23 +2,15 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { ChatService } from './chat.service';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { UpdateChatDto } from './dto/update-chat.dto';
-import { ConversationService } from 'src/conversation/conversation.service';
 
 @Controller('chat')
 export class ChatController {
-  constructor(private readonly chatService: ChatService, 
-    private readonly conversationService: ConversationService
-  ) {}
+  constructor(private readonly chatService: ChatService) {}
 
   @Post()
   create(@Body() createChatDto: CreateChatDto) {
     return this.chatService.create(createChatDto);
   }
-
-  @Get('user/:userId')
-async getUserConversations(@Param('userId') userId: string) {
-  return this.conversationService.getUserConversations(userId);
-}
 
   @Get()
   findAll() {

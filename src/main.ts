@@ -2,12 +2,16 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express'; // ✅ Importer NestExpressApplication
 import { join } from 'path';
-import * as dotenv from 'dotenv';
+import * as express from 'express';
+import * as path from 'path';
 
-dotenv.config();
+// src/main.ts
+
+
 async function bootstrap() {
   //  Spécifier NestExpressApplication pour éviter l'erreur
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.use('/reels', express.static(path.join(__dirname, '..', 'public', 'reels')));
 
   //  Active CORS pour les appels API (ex: depuis iOS)
   app.enableCors();
@@ -17,6 +21,7 @@ async function bootstrap() {
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: 'Content-Type, Accept',
   });
+  
   
   
   // Servir les fichiers statiques depuis le dossier 'uploads'

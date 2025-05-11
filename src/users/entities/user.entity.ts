@@ -7,6 +7,8 @@ export type UserDocument = User & Document;
 
 @Schema()
 export class User extends Document {
+  
+  
     @Prop({ required: true })
     name: string;
   
@@ -32,45 +34,10 @@ export class User extends Document {
     @Prop({ default: '' }) 
     location: string; // Lieu de résidence
     
-    
-    @Prop({
-        type: {
-          lat: { type: Number, default: null },
-          lng: { type: Number, default: null }
-        },
-        _id: false,
-        default: null
-      })
-      coordinates: { lat: number | null; lng: number | null };
-    
-      // New: For AR orientation (cached from mobile sensors)
-      @Prop({
-        type: {
-          heading: { type: Number, default: null }, // Compass bearing (0-360°)
-          lastUpdated: { type: Date, default: null }
-        },
-        _id: false,
-        default: null
-      })
-      orientation: { heading: number | null; lastUpdated: Date | null };
-    
-      // New: Track location history for movement-based AR features
-      @Prop({
-        type: [{
-          lat: Number,
-          lng: Number,
-          timestamp: Date
-        }],
-        default: []
-      })
-      locationHistory: Array<{ lat: number; lng: number; timestamp: Date }>;
-
-
-
     @Prop({ default: '' }) 
     profileImage: string;
     
-    
+
  
 
     @Prop({ type: Number, default: 0 }) 
@@ -97,17 +64,19 @@ searchHistory: string[]; // ex : ["café", "plage", "shopping"]
 
 @Prop({ type: [String], default: [] })
 tags: string[];
+@Prop({ type: [{ start: String, end: String }] })
+availability: { start: string; end: string }[];
 @Prop({
-  type: [
-    {
-      activities: { type: [String], default: [] }, // Activities for each day
-    },
-  ],
-  default: [],
-})
-itinerary: { activities: string[] }[]; // Array of days with activities
+    type: [
+      {
+        activities: { type: [String], default: [] }, // Activities for each day
+      },
+    ],
+    default: [],
+  })
+  itinerary: { activities: string[] }[]; // Array of days with activities
+  
 
 }
-
 
 export const UserSchema = SchemaFactory.createForClass(User);
