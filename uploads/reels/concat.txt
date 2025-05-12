@@ -1,5 +1,5 @@
-file '/Users/salma/Desktop/backend_pim/uploads/reels/8ec0e72d-f0a4-4351-b1da-f627ac39ae71.jpg'
+file '/Users/salma/Desktop/backend_pim/uploads/reels/a9951c2d-3399-48da-9f62-657e4ef52c59.jpg'
 duration 3
-file '/Users/salma/Desktop/backend_pim/uploads/reels/a05422d2-7f65-45d1-86d8-a46a5446ff79.jpg'
+file '/Users/salma/Desktop/backend_pim/uploads/reels/abfa85d4-f0b7-4205-b48e-5df2a867141b.jpg'
 duration 3
-file '/Users/salma/Desktop/backend_pim/uploads/reels/a05422d2-7f65-45d1-86d8-a46a5446ff79.jpg'
+file '/Users/salma/Desktop/backend_pim/uploads/reels/abfa85d4-f0b7-4205-b48e-5df2a867141b.jpg'
